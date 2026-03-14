@@ -45,6 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(p);
       }
       setLoading(false);
+    }).catch(() => {
+      setLoading(false);
     });
 
     // Listen for auth changes
