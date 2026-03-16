@@ -371,18 +371,31 @@ CREATE POLICY "storage: admin delete"
     AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
   );
 
+-- Driver upload: must be uploading to a campaign assigned to them
+-- name = storage object path, e.g. campaigns/<id>/photos/<id>/original.jpg
 CREATE POLICY "storage: driver upload"
   ON storage.objects FOR INSERT
   WITH CHECK (
     bucket_id = 'campaign-photos'
     AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'driver'
+    AND EXISTS (
+      SELECT 1 FROM public.campaigns c
+      WHERE c.driver_profile_id = auth.uid()
+        AND name LIKE 'campaigns/' || c.id::text || '/%'
+    )
   );
 
+-- Driver read: only objects within their assigned campaign paths
 CREATE POLICY "storage: driver read own"
   ON storage.objects FOR SELECT
   USING (
     bucket_id = 'campaign-photos'
     AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'driver'
+    AND EXISTS (
+      SELECT 1 FROM public.campaigns c
+      WHERE c.driver_profile_id = auth.uid()
+        AND name LIKE 'campaigns/' || c.id::text || '/%'
+    )
   );
 
 CREATE POLICY "storage: client read signed"
