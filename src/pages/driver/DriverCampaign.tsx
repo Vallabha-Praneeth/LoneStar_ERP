@@ -138,7 +138,7 @@ export default function DriverCampaign() {
         <StatusBadge status={activeShift ? "active" : campaign.status} />
       </div>
 
-      <div className="p-4 max-w-md mx-auto space-y-4">
+      <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] max-w-md mx-auto space-y-4">
         {/* Campaign Card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
