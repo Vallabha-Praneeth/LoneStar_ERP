@@ -207,62 +207,50 @@ ALTER TABLE public.driver_shifts    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.campaign_photos  ENABLE ROW LEVEL SECURITY;
 
 -- ── profiles RLS ─────────────────────────────────────────────
+-- NOTE: All role checks use JWT app_metadata claims to avoid infinite
+-- recursion when policies on other tables also query profiles.
+-- Run: UPDATE auth.users SET raw_app_meta_data = raw_app_meta_data || '{"role":"<role>"}'
+-- for each user after creation so the claim is present in the JWT.
+
 -- Each user can read their own profile
 CREATE POLICY "profiles: self read"
   ON public.profiles FOR SELECT
   USING (auth.uid() = id);
 
--- Admins can read all profiles
+-- Admins can read all profiles (JWT-based — no profiles query to avoid recursion)
 CREATE POLICY "profiles: admin read all"
   ON public.profiles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles p
-      WHERE p.id = auth.uid() AND p.role = 'admin'
-    )
-  );
+  USING ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 -- ── clients RLS ──────────────────────────────────────────────
 -- Only admins can read/write clients
 CREATE POLICY "clients: admin all"
   ON public.clients FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles p
-      WHERE p.id = auth.uid() AND p.role = 'admin'
-    )
-  );
+  USING ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 -- ── campaigns RLS ────────────────────────────────────────────
 -- Admin: full access
 CREATE POLICY "campaigns: admin all"
   ON public.campaigns FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles p
-      WHERE p.id = auth.uid() AND p.role = 'admin'
-    )
-  );
+  USING ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 -- Driver: read only assigned campaigns
 CREATE POLICY "campaigns: driver read assigned"
   ON public.campaigns FOR SELECT
   USING (
     driver_profile_id = auth.uid()
-    AND EXISTS (
-      SELECT 1 FROM public.profiles p
-      WHERE p.id = auth.uid() AND p.role = 'driver'
-    )
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'driver'
   );
 
 -- Client: read campaigns belonging to their client organisation
+-- Safe to query profiles WHERE id = auth.uid() — covered by "self read" (no recursion)
 CREATE POLICY "campaigns: client read own org"
   ON public.campaigns FOR SELECT
   USING (
-    EXISTS (
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'client'
+    AND EXISTS (
       SELECT 1 FROM public.profiles p
       WHERE p.id = auth.uid()
-        AND p.role = 'client'
         AND p.client_id = campaigns.client_id
     )
   );
@@ -271,19 +259,18 @@ CREATE POLICY "campaigns: client read own org"
 -- Admin: full access
 CREATE POLICY "driver_shifts: admin all"
   ON public.driver_shifts FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles p
-      WHERE p.id = auth.uid() AND p.role = 'admin'
-    )
-  );
+  USING ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 -- Driver: read and write own shifts on assigned campaigns
 CREATE POLICY "driver_shifts: driver own"
   ON public.driver_shifts FOR ALL
-  USING (driver_profile_id = auth.uid())
+  USING (
+    driver_profile_id = auth.uid()
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'driver'
+  )
   WITH CHECK (
     driver_profile_id = auth.uid()
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'driver'
     AND EXISTS (
       SELECT 1 FROM public.campaigns c
       WHERE c.id = campaign_id AND c.driver_profile_id = auth.uid()
@@ -294,12 +281,12 @@ CREATE POLICY "driver_shifts: driver own"
 CREATE POLICY "driver_shifts: client read"
   ON public.driver_shifts FOR SELECT
   USING (
-    EXISTS (
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'client'
+    AND EXISTS (
       SELECT 1
       FROM public.campaigns c
       JOIN public.profiles p ON p.id = auth.uid()
       WHERE c.id = campaign_id
-        AND p.role = 'client'
         AND p.client_id = c.client_id
     )
   );
@@ -308,18 +295,14 @@ CREATE POLICY "driver_shifts: client read"
 -- Admin: full access
 CREATE POLICY "campaign_photos: admin all"
   ON public.campaign_photos FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles p
-      WHERE p.id = auth.uid() AND p.role = 'admin'
-    )
-  );
+  USING ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 -- Driver: read/insert photos on assigned campaigns only
 CREATE POLICY "campaign_photos: driver own campaign"
   ON public.campaign_photos FOR ALL
   USING (
     uploaded_by = auth.uid()
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'driver'
     AND EXISTS (
       SELECT 1 FROM public.campaigns c
       WHERE c.id = campaign_id AND c.driver_profile_id = auth.uid()
@@ -327,6 +310,7 @@ CREATE POLICY "campaign_photos: driver own campaign"
   )
   WITH CHECK (
     uploaded_by = auth.uid()
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'driver'
     AND EXISTS (
       SELECT 1 FROM public.campaigns c
       WHERE c.id = campaign_id AND c.driver_profile_id = auth.uid()
@@ -338,45 +322,86 @@ CREATE POLICY "campaign_photos: client read approved"
   ON public.campaign_photos FOR SELECT
   USING (
     status = 'approved'
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'client'
     AND EXISTS (
       SELECT 1
       FROM public.campaigns c
       JOIN public.profiles p ON p.id = auth.uid()
       WHERE c.id = campaign_id
-        AND p.role = 'client'
         AND p.client_id = c.client_id
     )
   );
 
 -- ============================================================
--- STORAGE BUCKET (run after creating the bucket in the dashboard)
+-- STORAGE BUCKET
 -- ============================================================
--- Create the bucket named "campaign-photos" as PRIVATE in the
--- Supabase dashboard first, then run these policies.
---
--- INSERT INTO storage.buckets (id, name, public) VALUES ('campaign-photos', 'campaign-photos', false);
---
--- Storage policy: admin can read any object
--- CREATE POLICY "storage: admin read all"
---   ON storage.objects FOR SELECT
---   USING (
---     bucket_id = 'campaign-photos'
---     AND EXISTS (
---       SELECT 1 FROM public.profiles p
---       WHERE p.id = auth.uid() AND p.role = 'admin'
---     )
---   );
---
--- Storage policy: driver can upload to their campaign path
--- CREATE POLICY "storage: driver upload"
---   ON storage.objects FOR INSERT
---   WITH CHECK (
---     bucket_id = 'campaign-photos'
---     AND EXISTS (
---       SELECT 1 FROM public.profiles p
---       WHERE p.id = auth.uid() AND p.role = 'driver'
---     )
---   );
---
--- Path convention: campaigns/{campaign_id}/photos/{photo_id}/original
+-- Create the private bucket and apply JWT-based storage policies.
+-- Path convention: campaigns/{campaign_id}/photos/{photo_id}/original.{ext}
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'campaign-photos',
+  'campaign-photos',
+  false,
+  15728640,
+  ARRAY['image/jpeg','image/png','image/heic','image/webp']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = false,
+  file_size_limit = 15728640;
+
+CREATE POLICY "storage: admin read all"
+  ON storage.objects FOR SELECT
+  USING (
+    bucket_id = 'campaign-photos'
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+  );
+
+CREATE POLICY "storage: admin insert"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'campaign-photos'
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+  );
+
+CREATE POLICY "storage: admin delete"
+  ON storage.objects FOR DELETE
+  USING (
+    bucket_id = 'campaign-photos'
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+  );
+
+-- Driver upload: must be uploading to a campaign assigned to them
+-- name = storage object path, e.g. campaigns/<id>/photos/<id>/original.jpg
+CREATE POLICY "storage: driver upload"
+  ON storage.objects FOR INSERT
+  WITH CHECK (
+    bucket_id = 'campaign-photos'
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'driver'
+    AND EXISTS (
+      SELECT 1 FROM public.campaigns c
+      WHERE c.driver_profile_id = auth.uid()
+        AND name LIKE 'campaigns/' || c.id::text || '/%'
+    )
+  );
+
+-- Driver read: only objects within their assigned campaign paths
+CREATE POLICY "storage: driver read own"
+  ON storage.objects FOR SELECT
+  USING (
+    bucket_id = 'campaign-photos'
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'driver'
+    AND EXISTS (
+      SELECT 1 FROM public.campaigns c
+      WHERE c.driver_profile_id = auth.uid()
+        AND name LIKE 'campaigns/' || c.id::text || '/%'
+    )
+  );
+
+CREATE POLICY "storage: client read signed"
+  ON storage.objects FOR SELECT
+  USING (
+    bucket_id = 'campaign-photos'
+    AND (auth.jwt() -> 'app_metadata' ->> 'role') = 'client'
+  );
 -- ============================================================
