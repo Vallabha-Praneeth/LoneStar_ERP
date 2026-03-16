@@ -143,7 +143,7 @@ export default function DriverUpload() {
         <span className="font-semibold text-sm text-foreground">Upload Photo</span>
       </div>
 
-      <div className="p-4 max-w-md mx-auto space-y-4">
+      <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] max-w-md mx-auto space-y-4">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -216,7 +216,7 @@ export default function DriverUpload() {
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Add a note about this photo..."
-              className="rounded-xl bg-secondary/50 border-border resize-none"
+              className="rounded-xl bg-secondary/50 border-border resize-none text-base"
               rows={2}
             />
           </div>
