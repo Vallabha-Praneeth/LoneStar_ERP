@@ -1,0 +1,57 @@
+version: "2"
+language: "en-US"
+
+reviews:
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+      - develop
+
+  profile: "assertive"
+  review_status: true
+  commit_status: true
+
+  path_filters:
+    - "!**/*.lock"
+    - "!**/node_modules/**"
+    - "!dist/**"
+    - "!supabase/.temp/**"
+
+  tools:
+    eslint:
+      enabled: true
+    github-checks:
+      enabled: true
+
+custom_instructions: |
+  This is a single Vite + React 18 + TypeScript app for a mobile billboard
+  campaign proof-sharing platform (AdTruck / LoneStar ERP).
+
+  Key rules to enforce:
+  - Supabase anon key must NEVER appear in source files; use VITE_ env vars only
+  - VITE_SUPABASE_ANON_KEY must never be logged or exposed in client output
+  - All Supabase queries must use parameterized SDK methods (no raw SQL string interpolation)
+  - Photo storage must use signed URLs (createSignedUrl) — never public bucket URLs
+  - Auth must use supabase.auth.signInWithPassword — no custom JWT generation
+  - RLS policies must be present for any new table added to supabase/migrations/
+  - lock: "no-op" on the Supabase client in src/lib/supabase.ts is intentional
+    (fixes React 18 Strict Mode double-effect Web Lock conflict — do not remove)
+  - signOut() must always be followed by navigate("/") to redirect to role selector
+  - No OTP / magic link auth — email + password only per project rules
+
+  App structure:
+  - src/pages/admin/   — Admin portal (5 screens)
+  - src/pages/driver/  — Driver app (4 screens)
+  - src/pages/client/  — Client portal (3 screens)
+  - src/contexts/AuthContext.tsx — session, profile, loading, signOut
+  - src/lib/supabase.ts — Supabase client (single instance)
+  - src/lib/types.ts — Profile, Campaign, DriverShift, CampaignPhoto, Client
+  - supabase/migrations/ — SQL run in Supabase SQL editor (not via CLI)
+
+  Tables: profiles, clients, campaigns, driver_shifts, campaign_photos
+  Storage bucket: campaign-photos (private, signed URLs only)
+
+chat:
+  auto_reply: true
