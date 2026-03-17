@@ -27,6 +27,12 @@ jobs:
         working-directory: tests/e2e-web
         run: npm ci
 
+      - name: Build app
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
       - name: Install Playwright browsers
         working-directory: tests/e2e-web
         run: npx playwright install --with-deps chromium
@@ -35,7 +41,7 @@ jobs:
         working-directory: tests/e2e-web
         env:
           CI: true
-          BASE_URL: http://localhost:5173
+          BASE_URL: http://localhost:4173
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           TEST_ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
