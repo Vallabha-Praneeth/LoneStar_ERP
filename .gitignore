@@ -25,6 +25,10 @@ lerna-debug.log*
 # Test artifacts
 playwright-report/
 test-results/
+tests/e2e-web/playwright-report/
+tests/e2e-web/results/
+tests/e2e-web/playwright/.auth/
+tests/e2e-web/.env.test
 
 # Supabase local
 supabase/.branches/
