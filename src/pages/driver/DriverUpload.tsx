@@ -15,13 +15,23 @@ interface ActiveCampaign {
 }
 
 async function fetchActiveCampaign(driverId: string): Promise<ActiveCampaign | null> {
-  const today = new Date().toISOString().slice(0, 10);
+  // Find active/pending campaign first, then fallback to most recent
+  const { data: activeCampaign } = await supabase
+    .from("campaigns")
+    .select("id, title")
+    .eq("driver_profile_id", driverId)
+    .in("status", ["active", "pending", "draft"])
+    .order("campaign_date", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (activeCampaign) return activeCampaign as ActiveCampaign;
+
   const { data, error } = await supabase
     .from("campaigns")
     .select("id, title")
     .eq("driver_profile_id", driverId)
-    .gte("campaign_date", today)
-    .order("campaign_date", { ascending: true })
+    .order("campaign_date", { ascending: false })
     .limit(1)
     .single();
 

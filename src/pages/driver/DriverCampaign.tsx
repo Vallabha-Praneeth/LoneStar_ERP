@@ -20,7 +20,23 @@ interface DriverCampaignData {
 }
 
 async function fetchDriverCampaign(driverId: string): Promise<DriverCampaignData | null> {
-  const today = new Date().toISOString().slice(0, 10);
+  // First try to find an active/pending campaign (any date)
+  const { data: activeCampaign, error: activeErr } = await supabase
+    .from("campaigns")
+    .select(`
+      id, title, campaign_date, route_code, status,
+      driver_shifts ( id, started_at, ended_at ),
+      campaign_photos ( id, status, submitted_at )
+    `)
+    .eq("driver_profile_id", driverId)
+    .in("status", ["active", "pending", "draft"])
+    .order("campaign_date", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (activeCampaign) return activeCampaign as DriverCampaignData;
+
+  // Fallback: most recent campaign assigned to this driver
   const { data, error } = await supabase
     .from("campaigns")
     .select(`
@@ -29,8 +45,7 @@ async function fetchDriverCampaign(driverId: string): Promise<DriverCampaignData
       campaign_photos ( id, status, submitted_at )
     `)
     .eq("driver_profile_id", driverId)
-    .gte("campaign_date", today)
-    .order("campaign_date", { ascending: true })
+    .order("campaign_date", { ascending: false })
     .limit(1)
     .single();
 
@@ -91,6 +106,13 @@ export default function DriverCampaign() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const { signOut } = useAuth();
+
+  async function handleSignOut() {
+    await signOut();
+    navigate("/");
+  }
+
   const activeShift = campaign?.driver_shifts.find((s) => !s.ended_at);
   const recentPhotos = [...(campaign?.campaign_photos ?? [])]
     .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
@@ -107,15 +129,21 @@ export default function DriverCampaign() {
   if (error || !campaign) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-2">
-          <Link to="/" className="text-muted-foreground">
-            <ChevronLeft className="w-5 h-5" />
-          </Link>
-          <span className="font-semibold text-sm text-foreground">My Campaign</span>
+        <div className="bg-card border-b border-border px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-[10px]">AD</span>
+            </div>
+            <span className="font-semibold text-sm text-foreground">My Campaign</span>
+          </div>
+          <button onClick={handleSignOut} className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm">
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
         </div>
         <div className="p-4 max-w-md mx-auto">
           <div className="bg-card rounded-2xl border border-border shadow-card p-8 text-center">
-            <p className="text-sm text-muted-foreground">No active campaign assigned to you today.</p>
+            <p className="text-sm text-muted-foreground">No active campaign assigned to you.</p>
           </div>
         </div>
       </div>
@@ -127,15 +155,17 @@ export default function DriverCampaign() {
       {/* Header */}
       <div className="bg-card border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link to="/" className="text-muted-foreground">
-            <ChevronLeft className="w-5 h-5" />
-          </Link>
           <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-[10px]">AD</span>
           </div>
           <span className="font-semibold text-sm text-foreground">My Campaign</span>
         </div>
-        <StatusBadge status={activeShift ? "active" : campaign.status} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={activeShift ? "active" : campaign.status} />
+          <button onClick={handleSignOut} className="text-muted-foreground hover:text-foreground">
+            <LogOut className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] max-w-md mx-auto space-y-4">

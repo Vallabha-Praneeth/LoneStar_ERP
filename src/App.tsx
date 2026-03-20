@@ -20,6 +20,8 @@ import AdminCampaignList from "./pages/admin/AdminCampaignList";
 import AdminCreateCampaign from "./pages/admin/AdminCreateCampaign";
 import AdminCampaignDetail from "./pages/admin/AdminCampaignDetail";
 import AdminPhotoApproval from "./pages/admin/AdminPhotoApproval";
+import AdminReports from "./pages/admin/AdminReports";
+import AdminEditCampaign from "./pages/admin/AdminEditCampaign";
 import { AdminLayout } from "./components/AdminLayout";
 
 // Client
@@ -109,7 +111,9 @@ const App = () => (
               <Route path="campaigns" element={<AdminCampaignList />} />
               <Route path="campaigns/create" element={<AdminCreateCampaign />} />
               <Route path="campaigns/:id" element={<AdminCampaignDetail />} />
+              <Route path="campaigns/:id/edit" element={<AdminEditCampaign />} />
               <Route path="campaigns/:id/photos" element={<AdminPhotoApproval />} />
+              <Route path="reports" element={<AdminReports />} />
             </Route>
 
             {/* Client */}

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,13 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Loader2, UserPlus, Plus } from "lucide-react";
+import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { CreateClientDialog } from "@/components/CreateClientDialog";
-import { CreateDriverDialog } from "@/components/CreateDriverDialog";
 
 interface ClientOption {
   id: string;
@@ -28,6 +25,30 @@ interface ClientOption {
 interface DriverOption {
   id: string;
   display_name: string;
+}
+
+interface CampaignData {
+  id: string;
+  title: string;
+  campaign_date: string;
+  status: string;
+  route_code: string | null;
+  internal_notes: string | null;
+  client_id: string;
+  driver_profile_id: string | null;
+  driver_daily_wage: number | null;
+  transport_cost: number | null;
+  other_cost: number | null;
+}
+
+async function fetchCampaign(id: string): Promise<CampaignData> {
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select("id, title, campaign_date, status, route_code, internal_notes, client_id, driver_profile_id, driver_daily_wage, transport_cost, other_cost")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data as CampaignData;
 }
 
 async function fetchClients(): Promise<ClientOption[]> {
@@ -51,40 +72,14 @@ async function fetchDrivers(): Promise<DriverOption[]> {
   return (data ?? []) as DriverOption[];
 }
 
-interface CreateCampaignInput {
-  title: string;
-  campaign_date: string;
-  client_id: string;
-  driver_profile_id: string | null;
-  route_code: string | null;
-  internal_notes: string | null;
-  driver_daily_wage: number | null;
-  transport_cost: number | null;
-  other_cost: number | null;
-  created_by: string;
-  status: string;
-}
-
-async function createCampaign(input: CreateCampaignInput): Promise<string> {
-  const { data, error } = await supabase
-    .from("campaigns")
-    .insert(input)
-    .select("id")
-    .single();
-  if (error) throw error;
-  return data.id;
-}
-
-export default function AdminCreateCampaign() {
+export default function AdminEditCampaign() {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
 
   const [title, setTitle] = useState("");
   const [clientId, setClientId] = useState("");
   const [driverId, setDriverId] = useState("");
-  const [showCreateClient, setShowCreateClient] = useState(false);
-  const [showCreateDriver, setShowCreateDriver] = useState(false);
   const [campaignDate, setCampaignDate] = useState("");
   const [routeCode, setRouteCode] = useState("");
   const [internalNotes, setInternalNotes] = useState("");
@@ -92,22 +87,40 @@ export default function AdminCreateCampaign() {
   const [transportCost, setTransportCost] = useState("");
   const [otherCost, setOtherCost] = useState("");
 
-  const clientsQuery = useQuery({
-    queryKey: ["clients-active"],
-    queryFn: fetchClients,
+  const campaignQuery = useQuery({
+    queryKey: ["campaign-edit", id],
+    queryFn: () => fetchCampaign(id!),
+    enabled: !!id,
   });
 
-  const driversQuery = useQuery({
-    queryKey: ["drivers-active"],
-    queryFn: fetchDrivers,
-  });
+  const clientsQuery = useQuery({ queryKey: ["clients-active"], queryFn: fetchClients });
+  const driversQuery = useQuery({ queryKey: ["drivers-active"], queryFn: fetchDrivers });
+
+  useEffect(() => {
+    if (campaignQuery.data && clientsQuery.data && driversQuery.data) {
+      const c = campaignQuery.data;
+      setTitle(c.title);
+      setClientId(c.client_id);
+      setDriverId(c.driver_profile_id ?? "");
+      setCampaignDate(c.campaign_date);
+      setRouteCode(c.route_code ?? "");
+      setInternalNotes(c.internal_notes ?? "");
+      setDriverWage(c.driver_daily_wage?.toString() ?? "");
+      setTransportCost(c.transport_cost?.toString() ?? "");
+      setOtherCost(c.other_cost?.toString() ?? "");
+    }
+  }, [campaignQuery.data, clientsQuery.data, driversQuery.data]);
 
   const mutation = useMutation({
-    mutationFn: (input: CreateCampaignInput) => createCampaign(input),
-    onSuccess: (newId) => {
+    mutationFn: async (input: Record<string, unknown>) => {
+      const { error } = await supabase.from("campaigns").update(input).eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign", id] });
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      toast.success("Campaign created");
-      navigate(`/admin/campaigns/${newId}`);
+      toast.success("Campaign updated");
+      navigate(`/admin/campaigns/${id}`);
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -120,7 +133,6 @@ export default function AdminCreateCampaign() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
     if (!title.trim()) {
       toast.error("Title is required");
       return;
@@ -144,13 +156,19 @@ export default function AdminCreateCampaign() {
       driver_daily_wage: parseOptionalNumber(driverWage),
       transport_cost: parseOptionalNumber(transportCost),
       other_cost: parseOptionalNumber(otherCost),
-      created_by: profile!.id,
-      status: "draft",
     });
   }
 
   const clients = clientsQuery.data ?? [];
   const drivers = driversQuery.data ?? [];
+
+  if (campaignQuery.isLoading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -159,8 +177,8 @@ export default function AdminCreateCampaign() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Create Campaign</h1>
-          <p className="text-sm text-muted-foreground">Set up a new ad truck campaign</p>
+          <h1 className="text-2xl font-bold text-foreground">Edit Campaign</h1>
+          <p className="text-sm text-muted-foreground">Update campaign details</p>
         </div>
       </div>
 
@@ -170,7 +188,6 @@ export default function AdminCreateCampaign() {
         className="space-y-6"
         onSubmit={handleSubmit}
       >
-        {/* Basic info */}
         <div className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
           <h2 className="font-semibold text-foreground">Campaign Details</h2>
           <div className="grid gap-4">
@@ -185,62 +202,28 @@ export default function AdminCreateCampaign() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Client</Label>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateClient(true)}
-                    className="text-xs text-primary hover:underline flex items-center gap-1"
-                  >
-                    <Plus className="w-3 h-3" />
-                    Add New
-                  </button>
-                </div>
+                <Label>Client</Label>
                 <Select value={clientId} onValueChange={setClientId}>
                   <SelectTrigger className="h-10 rounded-xl bg-secondary/50 border-border">
                     <SelectValue placeholder="Select client" />
                   </SelectTrigger>
                   <SelectContent>
                     {clients.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                     ))}
-                    {clients.length === 0 && (
-                      <div className="px-3 py-2 text-sm text-muted-foreground">
-                        No clients found
-                      </div>
-                    )}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Driver</Label>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateDriver(true)}
-                    className="text-xs text-primary hover:underline flex items-center gap-1"
-                  >
-                    <UserPlus className="w-3 h-3" />
-                    Add New
-                  </button>
-                </div>
+                <Label>Driver</Label>
                 <Select value={driverId} onValueChange={setDriverId}>
                   <SelectTrigger className="h-10 rounded-xl bg-secondary/50 border-border">
                     <SelectValue placeholder="Assign driver (optional)" />
                   </SelectTrigger>
                   <SelectContent>
                     {drivers.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.display_name}
-                      </SelectItem>
+                      <SelectItem key={d.id} value={d.id}>{d.display_name}</SelectItem>
                     ))}
-                    {drivers.length === 0 && (
-                      <div className="px-3 py-2 text-sm text-muted-foreground">
-                        No drivers found
-                      </div>
-                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -278,7 +261,6 @@ export default function AdminCreateCampaign() {
           </div>
         </div>
 
-        {/* Cost section */}
         <div className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
           <h2 className="font-semibold text-foreground">
             Cost Breakdown <span className="text-xs text-muted-foreground font-normal">(internal)</span>
@@ -287,9 +269,7 @@ export default function AdminCreateCampaign() {
             <div className="space-y-2">
               <Label>Driver Daily Wage</Label>
               <Input
-                type="number"
-                step="0.01"
-                min="0"
+                type="number" step="0.01" min="0"
                 value={driverWage}
                 onChange={(e) => setDriverWage(e.target.value)}
                 placeholder="0.00"
@@ -299,9 +279,7 @@ export default function AdminCreateCampaign() {
             <div className="space-y-2">
               <Label>Transport Cost</Label>
               <Input
-                type="number"
-                step="0.01"
-                min="0"
+                type="number" step="0.01" min="0"
                 value={transportCost}
                 onChange={(e) => setTransportCost(e.target.value)}
                 placeholder="0.00"
@@ -311,9 +289,7 @@ export default function AdminCreateCampaign() {
             <div className="space-y-2">
               <Label>Other Cost</Label>
               <Input
-                type="number"
-                step="0.01"
-                min="0"
+                type="number" step="0.01" min="0"
                 value={otherCost}
                 onChange={(e) => setOtherCost(e.target.value)}
                 placeholder="0.00"
@@ -337,28 +313,10 @@ export default function AdminCreateCampaign() {
             ) : (
               <Save className="w-4 h-4 mr-2" />
             )}
-            Create Campaign
+            Save Changes
           </Button>
         </div>
       </motion.form>
-
-      <CreateClientDialog
-        open={showCreateClient}
-        onOpenChange={setShowCreateClient}
-        onCreated={(client) => {
-          queryClient.invalidateQueries({ queryKey: ["clients-active"] });
-          setClientId(client.id);
-        }}
-      />
-
-      <CreateDriverDialog
-        open={showCreateDriver}
-        onOpenChange={setShowCreateDriver}
-        onCreated={(driver) => {
-          queryClient.invalidateQueries({ queryKey: ["drivers-active"] });
-          setDriverId(driver.id);
-        }}
-      />
     </div>
   );
 }

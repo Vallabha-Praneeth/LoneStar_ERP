@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Clock, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle2, Loader2, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -64,7 +64,13 @@ async function fetchClientTimingData(clientId: string): Promise<ShiftData | null
 }
 
 export default function ClientTimingSheet() {
-  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
+
+  async function handleSignOut() {
+    await signOut();
+    navigate("/");
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["client-timing", profile?.client_id],
@@ -104,11 +110,20 @@ export default function ClientTimingSheet() {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
-          <Link to="/client/campaign" className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <span className="font-semibold text-foreground">Timing Sheet</span>
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link to="/client/campaign" className="text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <span className="font-semibold text-foreground">Timing Sheet</span>
+          </div>
+          <button
+            onClick={handleSignOut}
+            className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Sign Out</span>
+          </button>
         </div>
       </div>
 

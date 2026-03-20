@@ -104,9 +104,11 @@ export default function ClientCampaignView() {
             )}
             <button
               onClick={handleSignOut}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm"
+              title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
         </div>
