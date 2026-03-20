@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Calendar, Clock, LogOut, Loader2, Image, FileDown, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Clock, LogOut, Loader2, Image, FileDown, X, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -18,17 +18,40 @@ interface ClientCampaignData {
   campaign_photos: { id: string; storage_path: string; submitted_at: string }[];
 }
 
-async function fetchClientCampaign(clientId: string): Promise<ClientCampaignData | null> {
+interface ClientCampaignOption {
+  id: string;
+  title: string;
+  campaign_date: string;
+}
+
+async function fetchClientCampaigns(clientId: string): Promise<ClientCampaignOption[]> {
   const { data, error } = await supabase
+    .from("campaigns")
+    .select("id, title, campaign_date")
+    .eq("client_id", clientId)
+    .order("campaign_date", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as ClientCampaignOption[];
+}
+
+async function fetchClientCampaign(clientId: string, campaignId?: string): Promise<ClientCampaignData | null> {
+  let query = supabase
     .from("campaigns")
     .select(`
       id, title, campaign_date, status,
       campaign_photos ( id, storage_path, submitted_at )
     `)
     .eq("client_id", clientId)
-    .order("campaign_date", { ascending: false })
-    .limit(1)
-    .single();
+    .order("campaign_date", { ascending: false });
+
+  if (campaignId) {
+    query = query.eq("id", campaignId);
+  } else {
+    query = query.limit(1);
+  }
+
+  const { data, error } = await query.single();
 
   if (error) {
     if (error.code === "PGRST116") return null;
@@ -55,10 +78,18 @@ export default function ClientCampaignView() {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | undefined>();
+  const [showCampaignPicker, setShowCampaignPicker] = useState(false);
+
+  const campaignListQuery = useQuery({
+    queryKey: ["client-campaigns-list", profile?.client_id],
+    queryFn: () => fetchClientCampaigns(profile!.client_id!),
+    enabled: !!profile?.client_id,
+  });
 
   const campaignQuery = useQuery({
-    queryKey: ["client-campaign", profile?.client_id],
-    queryFn: () => fetchClientCampaign(profile!.client_id!),
+    queryKey: ["client-campaign", profile?.client_id, selectedCampaignId],
+    queryFn: () => fetchClientCampaign(profile!.client_id!, selectedCampaignId),
     enabled: !!profile?.client_id,
   });
 
@@ -159,6 +190,41 @@ export default function ClientCampaignView() {
                 </div>
                 <StatusBadge status={campaign.status} />
               </div>
+
+              {/* Campaign switcher */}
+              {(campaignListQuery.data?.length ?? 0) > 1 && (
+                <div className="relative mb-4">
+                  <button
+                    onClick={() => setShowCampaignPicker(!showCampaignPicker)}
+                    className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                  >
+                    Switch Campaign
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showCampaignPicker ? "rotate-180" : ""}`} />
+                  </button>
+                  {showCampaignPicker && (
+                    <div className="absolute top-8 left-0 z-10 bg-card border border-border rounded-xl shadow-lg py-1 w-72">
+                      {campaignListQuery.data!.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => {
+                            setSelectedCampaignId(c.id);
+                            setShowCampaignPicker(false);
+                            setLightboxIndex(null);
+                          }}
+                          className={`w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 ${
+                            c.id === campaign.id ? "text-primary font-medium" : "text-foreground"
+                          }`}
+                        >
+                          {c.title}
+                          <span className="block text-xs text-muted-foreground">
+                            {format(new Date(c.campaign_date), "MMM d, yyyy")}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <Link
                 to="/client/campaign/timing"

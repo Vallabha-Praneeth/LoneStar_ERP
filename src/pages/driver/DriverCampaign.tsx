@@ -2,7 +2,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Camera, LogIn, LogOut, Clock, ChevronLeft, Loader2 } from "lucide-react";
+import { Camera, LogIn, LogOut, Clock, ChevronDown, Loader2, History } from "lucide-react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -56,6 +57,38 @@ async function fetchDriverCampaign(driverId: string): Promise<DriverCampaignData
   return data as DriverCampaignData;
 }
 
+interface DriverHistoryItem {
+  id: string;
+  title: string;
+  campaign_date: string;
+  status: string;
+  photo_count: number;
+}
+
+async function fetchDriverHistory(driverId: string, currentCampaignId?: string): Promise<DriverHistoryItem[]> {
+  let query = supabase
+    .from("campaigns")
+    .select("id, title, campaign_date, status, campaign_photos ( id )")
+    .eq("driver_profile_id", driverId)
+    .eq("status", "completed")
+    .order("campaign_date", { ascending: false })
+    .limit(20);
+
+  if (currentCampaignId) {
+    query = query.neq("id", currentCampaignId);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []).map((c: any) => ({
+    id: c.id,
+    title: c.title,
+    campaign_date: c.campaign_date,
+    status: c.status,
+    photo_count: c.campaign_photos?.length ?? 0,
+  }));
+}
+
 async function startShift(campaignId: string, driverId: string): Promise<void> {
   const { error } = await supabase.from("driver_shifts").insert({
     campaign_id: campaignId,
@@ -104,6 +137,14 @@ export default function DriverCampaign() {
       navigate("/driver/login");
     },
     onError: (err: Error) => toast.error(err.message),
+  });
+
+  const [showHistory, setShowHistory] = useState(false);
+
+  const historyQuery = useQuery({
+    queryKey: ["driver-history", profile?.id, campaign?.id],
+    queryFn: () => fetchDriverHistory(profile!.id, campaign?.id),
+    enabled: !!profile?.id,
   });
 
   const { signOut } = useAuth();
@@ -255,6 +296,41 @@ export default function DriverCampaign() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Past campaigns */}
+        {(historyQuery.data?.length ?? 0) > 0 && (
+          <div className="bg-card rounded-2xl border border-border shadow-card">
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="w-full flex items-center justify-between p-5"
+            >
+              <div className="flex items-center gap-2">
+                <History className="w-4 h-4 text-muted-foreground" />
+                <h3 className="font-medium text-foreground">Past Campaigns</h3>
+                <span className="text-xs text-muted-foreground">({historyQuery.data!.length})</span>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${showHistory ? "rotate-180" : ""}`} />
+            </button>
+            {showHistory && (
+              <div className="px-5 pb-5 space-y-2">
+                {historyQuery.data!.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between py-2 border-b border-border last:border-0"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(item.campaign_date), "MMM d, yyyy")} · {item.photo_count} photos
+                      </p>
+                    </div>
+                    <StatusBadge status={item.status as "completed"} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

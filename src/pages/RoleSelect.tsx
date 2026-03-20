@@ -1,6 +1,8 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Truck, Shield, Eye } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const roles = [
   {
@@ -27,6 +29,15 @@ const roles = [
 ];
 
 export default function RoleSelect() {
+  const { session, signOut } = useAuth();
+
+  // Clear any stale session when user lands on role selector
+  useEffect(() => {
+    if (session) {
+      signOut();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <motion.div

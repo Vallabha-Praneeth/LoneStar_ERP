@@ -28,6 +28,12 @@ export default function AdminLogin() {
     }
   }
 
+  async function handleForgotPassword(email: string) {
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/admin/login`,
+    });
+  }
+
   return (
     <LoginCard
       title="Admin Dashboard"
@@ -36,6 +42,8 @@ export default function AdminLogin() {
       onLogin={handleLogin}
       loading={loading}
       error={error}
+      showForgotPassword
+      onForgotPassword={handleForgotPassword}
     />
   );
 }

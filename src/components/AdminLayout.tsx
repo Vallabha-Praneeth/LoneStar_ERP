@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { AdminSidebar } from "./AdminSidebar";
-import { LayoutDashboard, PlusCircle, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, PlusCircle, FileText, Users, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 const mobileNavItems = [
   { label: "Campaigns", path: "/admin/campaigns", icon: LayoutDashboard },
   { label: "Create", path: "/admin/campaigns/create", icon: PlusCircle },
+  { label: "Reports", path: "/admin/reports", icon: FileText },
+  { label: "Users", path: "/admin/users", icon: Users },
 ];
 
 export function AdminLayout() {

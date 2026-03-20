@@ -13,6 +13,8 @@ interface LoginCardProps {
   usernameLabel?: string;
   loading?: boolean;
   error?: string;
+  showForgotPassword?: boolean;
+  onForgotPassword?: (email: string) => void;
 }
 
 export function LoginCard({
@@ -22,10 +24,16 @@ export function LoginCard({
   usernameLabel = "Username",
   loading = false,
   error,
+  showForgotPassword = false,
+  onForgotPassword,
 }: LoginCardProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -118,6 +126,68 @@ export function LoginCard({
               {loading ? "Signing in…" : "Sign In"}
             </Button>
           </form>
+
+          {showForgotPassword && !showResetForm && (
+            <button
+              type="button"
+              onClick={() => setShowResetForm(true)}
+              className="block w-full text-xs text-center text-primary hover:underline"
+            >
+              Forgot your password?
+            </button>
+          )}
+
+          {showResetForm && (
+            <div className="space-y-3 border-t border-border pt-4">
+              {resetSent ? (
+                <p className="text-sm text-success text-center">
+                  Password reset email sent. Check your inbox.
+                </p>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Enter your email to receive a reset link.
+                  </p>
+                  <Input
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    placeholder="Email address"
+                    className="h-10 rounded-xl bg-secondary/50 border-border"
+                    disabled={resetLoading}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1 h-10 rounded-xl text-sm"
+                      onClick={() => {
+                        setShowResetForm(false);
+                        setResetEmail("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      className="flex-1 h-10 rounded-xl bg-primary text-primary-foreground text-sm"
+                      disabled={!resetEmail || resetLoading}
+                      onClick={async () => {
+                        setResetLoading(true);
+                        if (onForgotPassword) {
+                          onForgotPassword(resetEmail);
+                        }
+                        setResetSent(true);
+                        setResetLoading(false);
+                      }}
+                    >
+                      {resetLoading ? "Sending…" : "Send Reset Link"}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           <p className="text-xs text-center text-muted-foreground">
             Need help? Contact your administrator.

@@ -22,6 +22,7 @@ import AdminCampaignDetail from "./pages/admin/AdminCampaignDetail";
 import AdminPhotoApproval from "./pages/admin/AdminPhotoApproval";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminEditCampaign from "./pages/admin/AdminEditCampaign";
+import AdminUsers from "./pages/admin/AdminUsers";
 import { AdminLayout } from "./components/AdminLayout";
 
 // Client
@@ -114,6 +115,7 @@ const App = () => (
               <Route path="campaigns/:id/edit" element={<AdminEditCampaign />} />
               <Route path="campaigns/:id/photos" element={<AdminPhotoApproval />} />
               <Route path="reports" element={<AdminReports />} />
+              <Route path="users" element={<AdminUsers />} />
             </Route>
 
             {/* Client */}

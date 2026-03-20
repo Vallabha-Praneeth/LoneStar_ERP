@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, FileText, LogOut } from "lucide-react";
+import { LayoutDashboard, PlusCircle, FileText, LogOut, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -7,6 +7,7 @@ const navItems = [
   { label: "Campaigns", path: "/admin/campaigns", icon: LayoutDashboard },
   { label: "Create Campaign", path: "/admin/campaigns/create", icon: PlusCircle },
   { label: "Reports", path: "/admin/reports", icon: FileText },
+  { label: "Users", path: "/admin/users", icon: Users },
 ];
 
 export function AdminSidebar() {

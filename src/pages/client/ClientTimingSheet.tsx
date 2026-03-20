@@ -89,6 +89,19 @@ export default function ClientTimingSheet() {
   const shiftStarted = !!data?.started_at;
   const shiftEnded = !!data?.ended_at;
 
+  function formatDuration(startIso: string, endIso: string): string {
+    const diffMs = new Date(endIso).getTime() - new Date(startIso).getTime();
+    const totalMins = Math.round(diffMs / 60000);
+    const hrs = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
+    if (hrs > 0) return `${hrs}h ${mins}m`;
+    return `${mins}m`;
+  }
+
+  const shiftDuration = shiftStarted && shiftEnded
+    ? formatDuration(data!.started_at, data!.ended_at!)
+    : null;
+
   const timingRows = [
     {
       label: "Shift Start",
@@ -167,6 +180,13 @@ export default function ClientTimingSheet() {
                 </div>
               ))}
             </div>
+
+            {shiftDuration && (
+              <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">Total Shift Duration</span>
+                <span className="text-sm font-semibold text-primary">{shiftDuration}</span>
+              </div>
+            )}
           </motion.div>
         )}
       </div>

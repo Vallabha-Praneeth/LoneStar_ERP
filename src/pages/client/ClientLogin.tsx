@@ -28,6 +28,12 @@ export default function ClientLogin() {
     }
   }
 
+  async function handleForgotPassword(email: string) {
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/client/login`,
+    });
+  }
+
   return (
     <LoginCard
       title="Campaign Portal"
@@ -36,6 +42,8 @@ export default function ClientLogin() {
       onLogin={handleLogin}
       loading={loading}
       error={error}
+      showForgotPassword
+      onForgotPassword={handleForgotPassword}
     />
   );
 }
