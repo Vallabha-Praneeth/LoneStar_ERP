@@ -2,9 +2,16 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Plus, Search, Loader2 } from "lucide-react";
+import { Plus, Search, Loader2, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
@@ -34,6 +41,7 @@ async function fetchCampaigns(): Promise<CampaignRow[]> {
 
 export default function AdminCampaignList() {
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: campaigns = [], isLoading, error } = useQuery({
     queryKey: ["campaigns"],
@@ -41,15 +49,26 @@ export default function AdminCampaignList() {
   });
 
   const filtered = useMemo(() => {
+    let result = campaigns;
+
+    // Status filter
+    if (statusFilter !== "all") {
+      result = result.filter((c) => c.status === statusFilter);
+    }
+
+    // Text search
     const q = search.toLowerCase();
-    if (!q) return campaigns;
-    return campaigns.filter(
-      (c) =>
-        c.title.toLowerCase().includes(q) ||
-        (c.clients?.name ?? "").toLowerCase().includes(q) ||
-        (c.driver_profile?.display_name ?? "").toLowerCase().includes(q)
-    );
-  }, [campaigns, search]);
+    if (q) {
+      result = result.filter(
+        (c) =>
+          c.title.toLowerCase().includes(q) ||
+          (c.clients?.name ?? "").toLowerCase().includes(q) ||
+          (c.driver_profile?.display_name ?? "").toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [campaigns, search, statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -66,14 +85,29 @@ export default function AdminCampaignList() {
         </Link>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Search campaigns..."
-          className="pl-9 h-10 rounded-xl bg-card border-border"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search campaigns..."
+            className="pl-9 h-10 rounded-xl bg-card border-border"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-auto min-w-[140px] h-10 rounded-xl bg-card border-border">
+            <Filter className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {isLoading && (

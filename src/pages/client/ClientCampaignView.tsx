@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Calendar, Clock, LogOut, Loader2, Image } from "lucide-react";
+import { Calendar, Clock, LogOut, Loader2, Image, FileDown, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
+import { generateClientPdf } from "@/lib/generateClientPdf";
 
 interface ClientCampaignData {
   id: string;
@@ -51,6 +54,7 @@ async function fetchSignedUrls(photos: { id: string; storage_path: string }[]): 
 export default function ClientCampaignView() {
   const navigate = useNavigate();
   const { profile, signOut } = useAuth();
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const campaignQuery = useQuery({
     queryKey: ["client-campaign", profile?.client_id],
@@ -95,12 +99,28 @@ export default function ClientCampaignView() {
           </div>
           <div className="flex items-center gap-3">
             {campaign && (
-              <Link
-                to="/client/campaign/timing"
-                className="text-sm text-primary hover:underline hidden sm:inline"
-              >
-                Timing Sheet
-              </Link>
+              <>
+                <button
+                  onClick={() =>
+                    generateClientPdf({
+                      title: campaign.title,
+                      campaign_date: campaign.campaign_date,
+                      status: campaign.status,
+                      photos: photos.map((p) => ({ submitted_at: p.submitted_at })),
+                    })
+                  }
+                  className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 hidden sm:flex"
+                >
+                  <FileDown className="w-4 h-4" />
+                  Export PDF
+                </button>
+                <Link
+                  to="/client/campaign/timing"
+                  className="text-sm text-primary hover:underline hidden sm:inline"
+                >
+                  Timing Sheet
+                </Link>
+              </>
             )}
             <button
               onClick={handleSignOut}
@@ -171,7 +191,8 @@ export default function ClientCampaignView() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.1 }}
-                      className="bg-card rounded-xl border border-border overflow-hidden shadow-card"
+                      className="bg-card rounded-xl border border-border overflow-hidden shadow-card cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => signedUrls[photo.id] && setLightboxIndex(i)}
                     >
                       <div className="aspect-[4/3]">
                         {signedUrls[photo.id] ? (
@@ -196,9 +217,77 @@ export default function ClientCampaignView() {
                 </div>
               )}
             </div>
+            {/* Mobile PDF button */}
+            <div className="sm:hidden">
+              <Button
+                className="w-full h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={() =>
+                  generateClientPdf({
+                    title: campaign.title,
+                    campaign_date: campaign.campaign_date,
+                    status: campaign.status,
+                    photos: photos.map((p) => ({ submitted_at: p.submitted_at })),
+                  })
+                }
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                Export PDF Report
+              </Button>
+            </div>
           </>
         )}
       </div>
+
+      {/* Fullscreen lightbox */}
+      <AnimatePresence>
+        {lightboxIndex !== null && signedUrls[photos[lightboxIndex]?.id] && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+            onClick={() => setLightboxIndex(null)}
+          >
+            <button
+              className="absolute top-4 right-4 text-white/70 hover:text-white z-50"
+              onClick={() => setLightboxIndex(null)}
+            >
+              <X className="w-8 h-8" />
+            </button>
+            {lightboxIndex > 0 && (
+              <button
+                className="absolute left-4 text-white/70 hover:text-white z-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex(lightboxIndex - 1);
+                }}
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+            )}
+            {lightboxIndex < photos.length - 1 && (
+              <button
+                className="absolute right-4 text-white/70 hover:text-white z-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxIndex(lightboxIndex + 1);
+                }}
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
+            )}
+            <img
+              src={signedUrls[photos[lightboxIndex].id]}
+              alt={`Photo ${lightboxIndex + 1}`}
+              className="max-w-[90vw] max-h-[90vh] object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="absolute bottom-4 text-white/60 text-sm">
+              {lightboxIndex + 1} / {photos.length}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
