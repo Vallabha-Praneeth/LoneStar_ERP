@@ -34,6 +34,7 @@ export default defineConfig({
     // Auth setup — runs first
     { name: 'setup-admin', testDir: './helpers', testMatch: /.*admin\.setup\.ts/ },
     { name: 'setup-client', testDir: './helpers', testMatch: /.*client\.setup\.ts/ },
+    { name: 'setup-driver', testDir: './helpers', testMatch: /.*driver\.setup\.ts/ },
 
     // Unauthenticated routes (no dependency)
     {
@@ -64,6 +65,17 @@ export default defineConfig({
       dependencies: ['setup-client'],
     },
 
+    // Driver portal — uses saved session
+    {
+      name: 'driver',
+      testDir: './tests/driver',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/driver.json',
+      },
+      dependencies: ['setup-driver'],
+    },
+
     // RLS tests — no saved session (signs in per test)
     {
       name: 'rls',
@@ -74,7 +86,7 @@ export default defineConfig({
 
   webServer: {
     command: process.env.CI ? 'npm run preview' : 'npm run dev',
-    url: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
+    url: process.env.CI ? 'http://localhost:4173' : (process.env.BASE_URL ?? 'http://localhost:5173'),
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     cwd: path.resolve(__dirname, '../..'),
