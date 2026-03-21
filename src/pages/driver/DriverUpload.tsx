@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { compressImage } from "@/lib/compressImage";
 
 interface ActiveCampaign {
   id: string;
@@ -112,7 +113,10 @@ export default function DriverUpload() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: () => uploadPhoto(campaign!.id, profile!.id, selectedFile!, note),
+    mutationFn: async () => {
+      const compressed = await compressImage(selectedFile!);
+      return uploadPhoto(campaign!.id, profile!.id, compressed, note);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["driver-campaign"] });
       navigate("/driver/upload-success");

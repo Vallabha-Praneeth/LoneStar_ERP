@@ -1,36 +1,48 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import type { UserRole } from "@/lib/types";
+
+// Eagerly loaded (small, always needed)
 import RoleSelect from "./pages/RoleSelect";
 import NotFound from "./pages/NotFound";
 
-// Driver
-import DriverLogin from "./pages/driver/DriverLogin";
-import DriverCampaign from "./pages/driver/DriverCampaign";
-import DriverUpload from "./pages/driver/DriverUpload";
-import DriverUploadSuccess from "./pages/driver/DriverUploadSuccess";
+// Lazy-loaded pages — each becomes its own chunk
+const DriverLogin = lazy(() => import("./pages/driver/DriverLogin"));
+const DriverCampaign = lazy(() => import("./pages/driver/DriverCampaign"));
+const DriverUpload = lazy(() => import("./pages/driver/DriverUpload"));
+const DriverUploadSuccess = lazy(() => import("./pages/driver/DriverUploadSuccess"));
 
-// Admin
-import AdminLogin from "./pages/admin/AdminLogin";
-import AdminCampaignList from "./pages/admin/AdminCampaignList";
-import AdminCreateCampaign from "./pages/admin/AdminCreateCampaign";
-import AdminCampaignDetail from "./pages/admin/AdminCampaignDetail";
-import AdminPhotoApproval from "./pages/admin/AdminPhotoApproval";
-import AdminReports from "./pages/admin/AdminReports";
-import AdminEditCampaign from "./pages/admin/AdminEditCampaign";
-import AdminUsers from "./pages/admin/AdminUsers";
-import { AdminLayout } from "./components/AdminLayout";
+const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
+const AdminCampaignList = lazy(() => import("./pages/admin/AdminCampaignList"));
+const AdminCreateCampaign = lazy(() => import("./pages/admin/AdminCreateCampaign"));
+const AdminCampaignDetail = lazy(() => import("./pages/admin/AdminCampaignDetail"));
+const AdminPhotoApproval = lazy(() => import("./pages/admin/AdminPhotoApproval"));
+const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
+const AdminEditCampaign = lazy(() => import("./pages/admin/AdminEditCampaign"));
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminLayout = lazy(() =>
+  import("./components/AdminLayout").then((m) => ({ default: m.AdminLayout }))
+);
 
-// Client
-import ClientLogin from "./pages/client/ClientLogin";
-import ClientCampaignView from "./pages/client/ClientCampaignView";
-import ClientTimingSheet from "./pages/client/ClientTimingSheet";
+const ClientLogin = lazy(() => import("./pages/client/ClientLogin"));
+const ClientCampaignView = lazy(() => import("./pages/client/ClientCampaignView"));
+const ClientTimingSheet = lazy(() => import("./pages/client/ClientTimingSheet"));
 
 const queryClient = new QueryClient();
+
+function PageSpinner() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 /** Redirects unauthenticated users to login; wrong role to "/" */
 function ProtectedRoute({
@@ -43,11 +55,7 @@ function ProtectedRoute({
   const { session, profile, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <PageSpinner />;
   }
 
   if (!session) {
@@ -63,86 +71,90 @@ function ProtectedRoute({
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<RoleSelect />} />
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Suspense fallback={<PageSpinner />}>
+              <Routes>
+                <Route path="/" element={<RoleSelect />} />
 
-            {/* Driver */}
-            <Route path="/driver/login" element={<DriverLogin />} />
-            <Route
-              path="/driver/campaign"
-              element={
-                <ProtectedRoute role="driver">
-                  <DriverCampaign />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/driver/upload"
-              element={
-                <ProtectedRoute role="driver">
-                  <DriverUpload />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/driver/upload-success"
-              element={
-                <ProtectedRoute role="driver">
-                  <DriverUploadSuccess />
-                </ProtectedRoute>
-              }
-            />
+                {/* Driver */}
+                <Route path="/driver/login" element={<DriverLogin />} />
+                <Route
+                  path="/driver/campaign"
+                  element={
+                    <ProtectedRoute role="driver">
+                      <DriverCampaign />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/driver/upload"
+                  element={
+                    <ProtectedRoute role="driver">
+                      <DriverUpload />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/driver/upload-success"
+                  element={
+                    <ProtectedRoute role="driver">
+                      <DriverUploadSuccess />
+                    </ProtectedRoute>
+                  }
+                />
 
-            {/* Admin */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute role="admin">
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="campaigns" element={<AdminCampaignList />} />
-              <Route path="campaigns/create" element={<AdminCreateCampaign />} />
-              <Route path="campaigns/:id" element={<AdminCampaignDetail />} />
-              <Route path="campaigns/:id/edit" element={<AdminEditCampaign />} />
-              <Route path="campaigns/:id/photos" element={<AdminPhotoApproval />} />
-              <Route path="reports" element={<AdminReports />} />
-              <Route path="users" element={<AdminUsers />} />
-            </Route>
+                {/* Admin */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute role="admin">
+                      <AdminLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="campaigns" element={<AdminCampaignList />} />
+                  <Route path="campaigns/create" element={<AdminCreateCampaign />} />
+                  <Route path="campaigns/:id" element={<AdminCampaignDetail />} />
+                  <Route path="campaigns/:id/edit" element={<AdminEditCampaign />} />
+                  <Route path="campaigns/:id/photos" element={<AdminPhotoApproval />} />
+                  <Route path="reports" element={<AdminReports />} />
+                  <Route path="users" element={<AdminUsers />} />
+                </Route>
 
-            {/* Client */}
-            <Route path="/client/login" element={<ClientLogin />} />
-            <Route
-              path="/client/campaign"
-              element={
-                <ProtectedRoute role="client">
-                  <ClientCampaignView />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/client/campaign/timing"
-              element={
-                <ProtectedRoute role="client">
-                  <ClientTimingSheet />
-                </ProtectedRoute>
-              }
-            />
+                {/* Client */}
+                <Route path="/client/login" element={<ClientLogin />} />
+                <Route
+                  path="/client/campaign"
+                  element={
+                    <ProtectedRoute role="client">
+                      <ClientCampaignView />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/client/campaign/timing"
+                  element={
+                    <ProtectedRoute role="client">
+                      <ClientTimingSheet />
+                    </ProtectedRoute>
+                  }
+                />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
