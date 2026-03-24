@@ -154,8 +154,7 @@ export default function AdminCampaignDetail() {
     (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
   )[0];
 
-  const pendingCount = campaign.campaign_photos.filter((p) => p.status === "pending").length;
-  const approvedCount = campaign.campaign_photos.filter((p) => p.status === "approved").length;
+  const photoCount = campaign.campaign_photos.length;
 
   return (
     <div className="space-y-6">
@@ -309,7 +308,7 @@ export default function AdminCampaignDetail() {
           <div>
             <h3 className="font-semibold text-foreground text-lg">Campaign Photos</h3>
             <p className="text-xs text-muted-foreground">
-              {approvedCount} approved · {pendingCount} pending review
+              {photoCount} photo{photoCount !== 1 ? "s" : ""}
             </p>
           </div>
           <Link to={`/admin/campaigns/${id}/photos`} className="text-sm text-primary hover:underline">

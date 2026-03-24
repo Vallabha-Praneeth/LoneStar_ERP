@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { FileDown, Loader2, Camera, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { FileDown, Loader2, Camera, Clock, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -44,14 +44,6 @@ export default function AdminReports() {
     const active = campaigns.filter((c) => c.status === "active").length;
     const completed = campaigns.filter((c) => c.status === "completed").length;
     const totalPhotos = campaigns.reduce((acc, c) => acc + c.campaign_photos.length, 0);
-    const approvedPhotos = campaigns.reduce(
-      (acc, c) => acc + c.campaign_photos.filter((p) => p.status === "approved").length,
-      0
-    );
-    const pendingPhotos = campaigns.reduce(
-      (acc, c) => acc + c.campaign_photos.filter((p) => p.status === "pending").length,
-      0
-    );
     const totalShiftHours = campaigns.reduce((acc, c) => {
       return (
         acc +
@@ -62,20 +54,18 @@ export default function AdminReports() {
         }, 0)
       );
     }, 0);
-    return { total, active, completed, totalPhotos, approvedPhotos, pendingPhotos, totalShiftHours };
+    return { total, active, completed, totalPhotos, totalShiftHours };
   }, [campaigns]);
 
   function exportCsv() {
-    const header = "Campaign,Client,Driver,Date,Status,Photos,Approved,Pending,Shift Hours\n";
+    const header = "Campaign,Client,Driver,Date,Status,Photos,Shift Hours\n";
     const rows = campaigns
       .map((c) => {
-        const approved = c.campaign_photos.filter((p) => p.status === "approved").length;
-        const pending = c.campaign_photos.filter((p) => p.status === "pending").length;
         const hours = c.driver_shifts.reduce((acc, s) => {
           if (!s.ended_at) return acc;
           return acc + (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 3600000;
         }, 0);
-        return `"${c.title}","${c.clients?.name ?? "—"}","${c.driver_profile?.display_name ?? "—"}",${c.campaign_date},${c.status},${c.campaign_photos.length},${approved},${pending},${hours.toFixed(1)}`;
+        return `"${c.title}","${c.clients?.name ?? "—"}","${c.driver_profile?.display_name ?? "—"}",${c.campaign_date},${c.status},${c.campaign_photos.length},${hours.toFixed(1)}`;
       })
       .join("\n");
 
@@ -124,10 +114,10 @@ export default function AdminReports() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Total Campaigns", value: stats.total, icon: AlertCircle, color: "text-primary" },
+          { label: "Total Campaigns", value: stats.total, icon: CheckCircle2, color: "text-primary" },
           { label: "Active", value: stats.active, icon: Clock, color: "text-success" },
           { label: "Total Photos", value: stats.totalPhotos, icon: Camera, color: "text-primary" },
-          { label: "Pending Review", value: stats.pendingPhotos, icon: AlertCircle, color: "text-warning" },
+          { label: "Shift Hours", value: stats.totalShiftHours.toFixed(1), icon: Clock, color: "text-muted-foreground" },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -157,15 +147,10 @@ export default function AdminReports() {
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
                 <th className="text-center px-4 py-3 font-medium text-muted-foreground">Photos</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Approved</th>
-                <th className="text-center px-4 py-3 font-medium text-muted-foreground">Pending</th>
               </tr>
             </thead>
             <tbody>
-              {campaigns.map((c) => {
-                const approved = c.campaign_photos.filter((p) => p.status === "approved").length;
-                const pending = c.campaign_photos.filter((p) => p.status === "pending").length;
-                return (
+              {campaigns.map((c) => (
                   <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30">
                     <td className="px-4 py-3 font-medium text-foreground">{c.title}</td>
                     <td className="px-4 py-3 text-muted-foreground">{c.clients?.name ?? "—"}</td>
@@ -193,19 +178,8 @@ export default function AdminReports() {
                     <td className="px-4 py-3 text-center text-muted-foreground">
                       {c.campaign_photos.length}
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="text-success font-medium">{approved}</span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {pending > 0 ? (
-                        <span className="text-warning font-medium">{pending}</span>
-                      ) : (
-                        <span className="text-muted-foreground">0</span>
-                      )}
-                    </td>
                   </tr>
-                );
-              })}
+              ))}
             </tbody>
           </table>
         </div>

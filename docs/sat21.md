@@ -193,28 +193,44 @@ tests/e2e-web/playwright.config.ts                 +12 lines (driver project + B
 
 ---
 
-## What's Pending / Where to Start Next Session
+## Continuation Session (21 Mar 2026 — afternoon)
 
-### When Chrome MCP is connected:
-1. **Visual browser walkthrough** of the P3 features on Vercel (screenshot each):
-   - Admin → `/admin/users` — search "driver", filter by role, check deactivate button
-   - Driver → `/driver/campaign` — expand Past Campaigns section
-   - Client → `/client/campaign` — click "Switch Campaign" dropdown
-   - Admin → `/admin/login` — click "Forgot your password?", fill email, submit
-   - Record a GIF of the full walkthrough if desired
+### Completed Tasks
 
-### Decisions needed:
-2. **Monorepo migration** — The canonical `adtruck-proof/` directory is empty. Options:
-   - **Option A:** Scaffold a new Next.js + Expo monorepo and port screens over multiple sessions
-   - **Option B:** Keep the Vite SPA as the production app and skip the monorepo
-   - **Option C:** Convert the Vite SPA in-place to Next.js (no Expo)
+1. **Tag v1.3.0** — tagged and pushed
+2. **Supabase auth rate limiting** — verified already enabled with production-safe defaults
+3. **Supabase password reset email** — configured AdTruck-branded template
+4. **Merge open PRs** — PR #6 and #1 merged
+5. **Monorepo decision** — Option B chosen (keep Vite SPA, skip monorepo). Canonical `adtruck-proof/` is empty.
+6. **Production hardening** — all items shipped:
+   - ErrorBoundary (`src/components/ErrorBoundary.tsx`)
+   - Image compression (`src/lib/compressImage.ts`) — max 2048px, JPEG 80%, skip <500KB
+   - Code splitting — React.lazy for all 16 pages, 93% main chunk reduction (1,254KB → 85KB)
+   - Vendor chunking in vite.config.ts (react, supabase, query, ui, pdf, motion)
+7. **Demo data seeded** — second completed campaign "Acme Corp - Spring Promo" (ID: `...0020`) with driver shift. Verified on live Vercel:
+   - Driver → Past Campaigns (1) shows Spring Promo with Completed badge
+   - Client → Switch Campaign dropdown shows both campaigns
 
-3. **Production hardening** (can do independently of #2):
-   - Add rate limiting on Supabase auth
-   - Configure Supabase email templates for password reset
-   - Add proper error boundaries
-   - Image compression before upload
-   - Lazy loading / code splitting (main chunk is 1.2MB)
+8. **CI E2E workflow** — already existed (`.github/workflows/ci-e2e.yml`), all 5 recent runs green
+9. **Mobile PRs reviewed** — PRs #12 and #13 both already merged. CodeRabbit left 4 actionable post-merge follow-ups:
+   - `login-form.tsx` — Restore TanStack Form + Zod validation (bypasses with raw useState)
+   - `use-auth-store.tsx` — Make signOut async (currently fire-and-forget)
+   - `package.json` — Update `.cursor/rules` to allow date-fns v3 (v1 rule is stale)
+   - `campaign-screen.tsx` — Update coding guidelines for v3 date tokens
+10. **UAT walkthrough** — verified all 3 roles on live Vercel:
+    - Admin: login, campaigns list (2 campaigns), campaign detail (photos, costs, PDF), users page, reports
+    - Driver: login, active campaign + shift, recent uploads, past campaigns toggle
+    - Client: login, campaign view with photos, switch campaign dropdown, timing sheet link
+
+### What's Done (ALL tasks complete)
+
+All 10 tasks finished. The web app is fully demo-ready. No blocking issues.
+
+### What's Left for Future Sessions
+
+- **Mobile app follow-ups:** 4 CodeRabbit post-merge items in `adtruck-driver-native` (see #9 above)
+- **Tag:** Consider v1.4.0 after mobile follow-ups
+- **Client demo:** App is ready — walk through all 3 roles with stakeholder
 
 ### Quick health check to run at start of next session:
 ```bash
@@ -227,10 +243,11 @@ cd tests/e2e-web && npx playwright test --reporter=list 2>&1 | tail -5
 ## Git Log (All Commits)
 
 ```
-(pending commit) test: add 19 E2E tests for P3 features — users, driver campaign, switcher, forgot password
-ab444eb feat: P3 nice-to-have — user management, campaign history, password reset, multi-campaign
-547c483 feat: Phase 3 — campaign filtering, client PDF export, photo fullscreen viewer  (prior context)
-e60b03d feat: implement Phase 1+2 gap fixes — critical bugs, missing features           (prior context)
+(latest) feat: production hardening — ErrorBoundary, image compression, code splitting + vendor chunks
+(prior)  test: add 19 E2E tests for P3 features — users, driver campaign, switcher, forgot password
+ab444eb  feat: P3 nice-to-have — user management, campaign history, password reset, multi-campaign
+547c483  feat: Phase 3 — campaign filtering, client PDF export, photo fullscreen viewer
+e60b03d  feat: implement Phase 1+2 gap fixes — critical bugs, missing features
 ```
 
 ---
