@@ -66,7 +66,7 @@ async function uploadPhoto(
   driverId: string,
   file: File,
   note: string
-): Promise<void> {
+): Promise<string> {
   const ext = ALLOWED_MIME_TYPES[file.type] ?? "jpg";
   const photoId = crypto.randomUUID();
   const storagePath = `campaigns/${campaignId}/photos/${photoId}/original.${ext}`;
@@ -85,7 +85,7 @@ async function uploadPhoto(
     note: note.trim() || null,
     submitted_at: new Date().toISOString(),
     captured_at: new Date().toISOString(),
-    status: "pending",
+    status: "approved",
   });
 
   if (insertError) {
@@ -93,6 +93,8 @@ async function uploadPhoto(
     await supabase.storage.from("campaign-photos").remove([storagePath]);
     throw insertError;
   }
+
+  return photoId;
 }
 
 export default function DriverUpload() {
@@ -117,8 +119,14 @@ export default function DriverUpload() {
       const compressed = await compressImage(selectedFile!);
       return uploadPhoto(campaign!.id, profile!.id, compressed, note);
     },
-    onSuccess: () => {
+    onSuccess: (photoId: string) => {
       queryClient.invalidateQueries({ queryKey: ["driver-campaign"] });
+      // Fire-and-forget WhatsApp notification to client
+      supabase.functions
+        .invoke("send-whatsapp-photo", {
+          body: { campaignId: campaign!.id, photoId },
+        })
+        .catch(() => {}); // silent — don't block the driver flow
       navigate("/driver/upload-success");
     },
     onError: (err: Error) => toast.error(err.message),

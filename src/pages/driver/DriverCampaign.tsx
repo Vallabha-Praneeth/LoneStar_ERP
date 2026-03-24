@@ -80,7 +80,7 @@ async function fetchDriverHistory(driverId: string, currentCampaignId?: string):
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []).map((c: any) => ({
+  return (data ?? []).map((c: { id: string; title: string; campaign_date: string; status: string; campaign_photos: { id: string }[] | null }) => ({
     id: c.id,
     title: c.title,
     campaign_date: c.campaign_date,

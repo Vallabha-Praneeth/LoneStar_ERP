@@ -34,7 +34,7 @@ async function fetchUsers(): Promise<UserRow[]> {
     .order("created_at", { ascending: false });
 
   if (error) throw error;
-  return (data ?? []).map((u: any) => ({
+  return (data ?? []).map((u: { id: string; display_name: string; username: string; email: string | null; role: "admin" | "driver" | "client"; is_active: boolean; created_at: string; clients: { name: string } | null }) => ({
     id: u.id,
     display_name: u.display_name,
     username: u.username,
