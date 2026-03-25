@@ -91,7 +91,12 @@ Deno.serve(async (req) => {
     // Build note text — empty string if no note
     const noteText = photo.note ? `Driver note: ${photo.note}` : "No additional notes";
 
-    // Single template message with image header + body parameters
+    // Static template (no params) — works with current approved version.
+    // Once Meta approves the {{1}}/{{2}} body params edit, switch to:
+    //   components: [{ type: "body", parameters: [
+    //     { type: "text", text: campaign.title },
+    //     { type: "text", text: noteText },
+    //   ]}]
     const templatePayload = {
       messaging_product: "whatsapp",
       to: recipientPhone,
@@ -99,24 +104,6 @@ Deno.serve(async (req) => {
       template: {
         name: templateName,
         language: { code: templateLang },
-        components: [
-          {
-            type: "header",
-            parameters: [
-              {
-                type: "image",
-                image: { link: photoUrl },
-              },
-            ],
-          },
-          {
-            type: "body",
-            parameters: [
-              { type: "text", text: campaign.title },
-              { type: "text", text: noteText },
-            ],
-          },
-        ],
       },
     };
 
