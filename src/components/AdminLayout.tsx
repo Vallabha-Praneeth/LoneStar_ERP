@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { AdminSidebar } from "./AdminSidebar";
 import { LayoutDashboard, PlusCircle, FileText, Users, LogOut, Menu, X } from "lucide-react";
+import { Logo } from "./Logo";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,12 +31,7 @@ export function AdminLayout() {
       <div className="flex-1 flex flex-col">
         {/* Mobile header */}
         <header className="md:hidden flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-[10px]">AD</span>
-            </div>
-            <span className="font-semibold text-sm">AdTruck Pro</span>
-          </div>
+          <Logo size="sm" />
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="text-foreground"

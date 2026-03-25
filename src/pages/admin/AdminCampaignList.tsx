@@ -2,7 +2,18 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Plus, Search, Loader2, Filter } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Loader2,
+  Filter,
+  ArrowRight,
+  Camera,
+  DollarSign,
+  User,
+  Truck,
+  Calendar,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,8 +32,12 @@ interface CampaignRow {
   title: string;
   campaign_date: string;
   status: "draft" | "pending" | "active" | "completed";
+  driver_daily_wage: number | null;
+  transport_cost: number | null;
+  other_cost: number | null;
   clients: { name: string } | null;
   driver_profile: { display_name: string } | null;
+  campaign_photos: { id: string; storage_path: string }[];
 }
 
 async function fetchCampaigns(): Promise<CampaignRow[]> {
@@ -30,8 +45,10 @@ async function fetchCampaigns(): Promise<CampaignRow[]> {
     .from("campaigns")
     .select(`
       id, title, campaign_date, status,
+      driver_daily_wage, transport_cost, other_cost,
       clients ( name ),
-      driver_profile:profiles!driver_profile_id ( display_name )
+      driver_profile:profiles!driver_profile_id ( display_name ),
+      campaign_photos ( id, storage_path )
     `)
     .order("campaign_date", { ascending: false });
 
@@ -39,11 +56,19 @@ async function fetchCampaigns(): Promise<CampaignRow[]> {
   return (data ?? []) as CampaignRow[];
 }
 
+function totalCost(c: CampaignRow): number {
+  return (c.driver_daily_wage ?? 0) + (c.transport_cost ?? 0) + (c.other_cost ?? 0);
+}
+
 export default function AdminCampaignList() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const { data: campaigns = [], isLoading, error } = useQuery({
+  const {
+    data: campaigns = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["campaigns"],
     queryFn: fetchCampaigns,
   });
@@ -51,12 +76,10 @@ export default function AdminCampaignList() {
   const filtered = useMemo(() => {
     let result = campaigns;
 
-    // Status filter
     if (statusFilter !== "all") {
       result = result.filter((c) => c.status === statusFilter);
     }
 
-    // Text search
     const q = search.toLowerCase();
     if (q) {
       result = result.filter(
@@ -72,10 +95,16 @@ export default function AdminCampaignList() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Campaigns</h1>
-          <p className="text-sm text-muted-foreground">Manage your ad truck campaigns</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+            Campaigns
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {campaigns.length} total &middot;{" "}
+            {campaigns.filter((c) => c.status === "active").length} active
+          </p>
         </div>
         <Link to="/admin/campaigns/create">
           <Button className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90">
@@ -85,6 +114,7 @@ export default function AdminCampaignList() {
         </Link>
       </div>
 
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -110,6 +140,7 @@ export default function AdminCampaignList() {
         </Select>
       </div>
 
+      {/* States */}
       {isLoading && (
         <div className="flex justify-center py-16">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -123,42 +154,100 @@ export default function AdminCampaignList() {
       )}
 
       {!isLoading && !error && filtered.length === 0 && (
-        <div className="text-sm text-muted-foreground text-center py-16">
-          {search ? "No campaigns match your search." : "No campaigns yet."}
+        <div className="text-center py-16 space-y-2">
+          <p className="text-sm text-muted-foreground">
+            {search ? "No campaigns match your search." : "No campaigns yet."}
+          </p>
+          {!search && (
+            <Link to="/admin/campaigns/create">
+              <Button variant="outline" size="sm" className="rounded-lg mt-2">
+                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                Create your first campaign
+              </Button>
+            </Link>
+          )}
         </div>
       )}
 
+      {/* Campaign cards */}
       <div className="grid gap-3">
-        {filtered.map((c, i) => (
-          <motion.div
-            key={c.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
-          >
-            <Link
-              to={`/admin/campaigns/${c.id}`}
-              className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover transition-all group"
+        {filtered.map((c, i) => {
+          const cost = totalCost(c);
+          const photoCount = c.campaign_photos?.length ?? 0;
+
+          return (
+            <motion.div
+              key={c.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04, ease: "easeOut" }}
             >
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-foreground truncate">{c.title}</h3>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
-                  <span className="text-xs text-muted-foreground">
-                    Client: {c.clients?.name ?? "—"}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    Driver: {c.driver_profile?.display_name ?? "Unassigned"}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(c.campaign_date), "MMM d, yyyy")}
-                  </span>
+              <Link
+                to={`/admin/campaigns/${c.id}`}
+                className="group flex items-stretch bg-card rounded-xl border border-border shadow-sm hover:shadow-md hover:-translate-y-[1px] transition-all duration-200 overflow-hidden"
+              >
+                {/* Status accent bar */}
+                <div
+                  className={`w-1 shrink-0 ${
+                    c.status === "active"
+                      ? "bg-emerald-500"
+                      : c.status === "completed"
+                      ? "bg-primary"
+                      : c.status === "pending"
+                      ? "bg-amber-500"
+                      : "bg-muted-foreground/30"
+                  }`}
+                />
+
+                {/* Content */}
+                <div className="flex-1 p-4 min-w-0">
+                  {/* Top row: title + badge */}
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="font-semibold text-foreground text-[15px] leading-snug truncate">
+                      {c.title}
+                    </h3>
+                    <StatusBadge status={c.status} className="shrink-0" />
+                  </div>
+
+                  {/* Meta row */}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2.5">
+                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <User className="w-3 h-3" />
+                      {c.clients?.name ?? "—"}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Truck className="w-3 h-3" />
+                      {c.driver_profile?.display_name ?? "Unassigned"}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Calendar className="w-3 h-3" />
+                      {format(new Date(c.campaign_date), "MMM d, yyyy")}
+                    </span>
+                  </div>
+
+                  {/* Stats row */}
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/60">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground/70">
+                      <Camera className="w-3.5 h-3.5 text-muted-foreground" />
+                      {photoCount} {photoCount === 1 ? "photo" : "photos"}
+                    </span>
+                    {cost > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground/70">
+                        <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
+                        {cost.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <StatusBadge status={c.status} />
-              <span className="text-muted-foreground group-hover:text-foreground transition-colors">→</span>
-            </Link>
-          </motion.div>
-        ))}
+
+                {/* Arrow */}
+                <div className="flex items-center pr-4 pl-2">
+                  <ArrowRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </Link>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );

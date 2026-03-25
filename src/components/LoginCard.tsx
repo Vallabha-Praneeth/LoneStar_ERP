@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Logo } from "./Logo";
 
 interface LoginCardProps {
   title: string;
@@ -44,12 +45,12 @@ export function LoginCard({
         className="w-full max-w-sm"
       >
         <div className="bg-card rounded-2xl shadow-card p-8 space-y-6 border border-border">
-          <div className="text-center space-y-1">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-primary-foreground font-bold text-sm">AD</span>
+          <div className="flex flex-col items-center gap-2">
+            <Logo size="md" showText={false} />
+            <div className="text-center">
+              <h1 className="text-xl font-semibold text-foreground">{title}</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
             </div>
-            <h1 className="text-xl font-semibold text-foreground">{title}</h1>
-            <p className="text-sm text-muted-foreground">{subtitle}</p>
           </div>
 
           {error && (

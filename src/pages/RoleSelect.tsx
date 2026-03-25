@@ -1,30 +1,34 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Truck, Shield, Eye } from "lucide-react";
+import { Truck, Shield, Eye, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Logo } from "@/components/Logo";
 
 const roles = [
   {
     label: "Driver",
-    desc: "Mobile campaign operations",
+    desc: "Start shifts, upload campaign photos",
     icon: Truck,
     path: "/driver/login",
-    color: "bg-success/10 text-success",
+    accent: "border-l-emerald-500",
+    iconBg: "bg-emerald-50 text-emerald-600",
   },
   {
     label: "Admin",
-    desc: "Campaign management dashboard",
+    desc: "Manage campaigns, drivers & reports",
     icon: Shield,
     path: "/admin/login",
-    color: "bg-primary/10 text-primary",
+    accent: "border-l-primary",
+    iconBg: "bg-primary/10 text-primary",
   },
   {
     label: "Client",
-    desc: "Campaign proof viewing",
+    desc: "View campaign proofs & timing sheets",
     icon: Eye,
     path: "/client/login",
-    color: "bg-accent/10 text-accent",
+    accent: "border-l-amber-500",
+    iconBg: "bg-amber-50 text-amber-600",
   },
 ];
 
@@ -41,44 +45,62 @@ export default function RoleSelect() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md space-y-6"
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="w-full max-w-sm space-y-8"
       >
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center mx-auto">
-            <span className="text-primary-foreground font-bold text-lg">AD</span>
+        {/* Brand header */}
+        <div className="flex flex-col items-center gap-3">
+          <Logo size="lg" showText={false} />
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">
+              AdTruck Pro
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Campaign proof-sharing platform
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-foreground">AdTruck Pro</h1>
-          <p className="text-sm text-muted-foreground">Campaign proof-sharing platform</p>
         </div>
 
-        <div className="space-y-3">
+        {/* Role cards */}
+        <div className="space-y-2.5">
           {roles.map((role, i) => (
             <motion.div
               key={role.label}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 + i * 0.1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12 + i * 0.08, ease: "easeOut" }}
             >
               <Link
                 to={role.path}
-                className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover transition-all group"
+                className={`
+                  group flex items-center gap-4 p-4
+                  bg-card rounded-xl border border-border border-l-[3px] ${role.accent}
+                  shadow-sm hover:shadow-md transition-all duration-200
+                  hover:-translate-y-[1px]
+                `}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${role.color}`}>
-                  <role.icon className="w-5 h-5" />
+                <div
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${role.iconBg}`}
+                >
+                  <role.icon className="w-[18px] h-[18px]" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground">{role.label}</h3>
-                  <p className="text-xs text-muted-foreground">{role.desc}</p>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-foreground text-[15px] leading-tight">
+                    {role.label}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                    {role.desc}
+                  </p>
                 </div>
-                <span className="text-muted-foreground group-hover:text-foreground transition-colors">→</span>
+                <ArrowRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
               </Link>
             </motion.div>
           ))}
         </div>
 
-        <p className="text-xs text-center text-muted-foreground">
+        <p className="text-[11px] text-center text-muted-foreground/60">
           Select your role to continue
         </p>
       </motion.div>
