@@ -91,12 +91,7 @@ Deno.serve(async (req) => {
     // Build note text — empty string if no note
     const noteText = photo.note ? `Driver note: ${photo.note}` : "No additional notes";
 
-    // Static template (no params) — works with current approved version.
-    // Once Meta approves the {{1}}/{{2}} body params edit, switch to:
-    //   components: [{ type: "body", parameters: [
-    //     { type: "text", text: campaign.title },
-    //     { type: "text", text: noteText },
-    //   ]}]
+    // Template: TEXT header "Campaign Photo Update", body with {{1}} {{2}}, footer
     const templatePayload = {
       messaging_product: "whatsapp",
       to: recipientPhone,
@@ -104,6 +99,15 @@ Deno.serve(async (req) => {
       template: {
         name: templateName,
         language: { code: templateLang },
+        components: [
+          {
+            type: "body",
+            parameters: [
+              { type: "text", text: campaign.title },
+              { type: "text", text: noteText },
+            ],
+          },
+        ],
       },
     };
 
@@ -128,11 +132,40 @@ Deno.serve(async (req) => {
     }
 
     const data = await res.json();
-    const messageId = data.messages?.[0]?.id;
-    console.log("Campaign photo sent:", messageId);
+    const templateMessageId = data.messages?.[0]?.id;
+    console.log("Template message sent:", templateMessageId);
+
+    // Follow up with the actual photo as a media message (within 24h conversation window)
+    const photoPayload = {
+      messaging_product: "whatsapp",
+      to: recipientPhone,
+      type: "image",
+      image: {
+        link: photoUrl,
+        caption: `📸 ${campaign.title}${photo.note ? `\n${noteText}` : ""}`,
+      },
+    };
+
+    const photoRes = await fetch(graphUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(photoPayload),
+    });
+
+    let photoMessageId = null;
+    if (photoRes.ok) {
+      const photoData = await photoRes.json();
+      photoMessageId = photoData.messages?.[0]?.id;
+      console.log("Photo message sent:", photoMessageId);
+    } else {
+      console.error("Photo message failed:", photoRes.status, await photoRes.text());
+    }
 
     return new Response(
-      JSON.stringify({ sent: true, messageId }),
+      JSON.stringify({ sent: true, templateMessageId, photoMessageId }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
