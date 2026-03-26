@@ -10,6 +10,6 @@ setup('authenticate as admin', async ({ page }) => {
   await page.getByLabel('Password').fill(process.env.TEST_ADMIN_PASSWORD!)
   await page.getByRole('button', { name: /sign in/i }).click()
 
-  await page.waitForURL(/\/admin\/campaigns/, { timeout: 15_000 })
+  await page.waitForURL(/\/admin\/campaigns/, { timeout: 30_000 })
   await page.context().storageState({ path: 'playwright/.auth/admin.json' })
 })

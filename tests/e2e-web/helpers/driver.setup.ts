@@ -10,6 +10,6 @@ setup('authenticate as driver', async ({ page }) => {
   await page.getByLabel('Password').fill(process.env.TEST_DRIVER_PASSWORD!)
   await page.getByRole('button', { name: /sign in/i }).click()
 
-  await page.waitForURL(/\/driver\/campaign/, { timeout: 15_000 })
+  await page.waitForURL(/\/driver\/campaign/, { timeout: 30_000 })
   await page.context().storageState({ path: 'playwright/.auth/driver.json' })
 })

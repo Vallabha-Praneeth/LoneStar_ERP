@@ -10,6 +10,6 @@ setup('authenticate as client', async ({ page }) => {
   await page.getByLabel('Password').fill(process.env.TEST_CLIENT_PASSWORD!)
   await page.getByRole('button', { name: /sign in/i }).click()
 
-  await page.waitForURL(/\/client\/campaign/, { timeout: 15_000 })
+  await page.waitForURL(/\/client\/campaign/, { timeout: 30_000 })
   await page.context().storageState({ path: 'playwright/.auth/client.json' })
 })

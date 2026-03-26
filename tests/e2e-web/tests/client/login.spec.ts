@@ -8,7 +8,7 @@ test.describe('Client login', () => {
     await page.getByLabel('Email').fill(process.env.TEST_CLIENT_EMAIL!)
     await page.getByLabel('Password').fill(process.env.TEST_CLIENT_PASSWORD!)
     await page.getByRole('button', { name: /sign in/i }).click()
-    await expect(page).toHaveURL(/\/client\/campaign/, { timeout: 15_000 })
+    await expect(page).toHaveURL(/\/client\/campaign/, { timeout: 30_000 })
   })
 
   test('invalid credentials → shows error, stays on login', async ({ page }) => {

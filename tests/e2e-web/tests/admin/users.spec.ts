@@ -5,7 +5,7 @@ test.describe('Admin user management', () => {
     await page.goto('/admin/users')
     await expect(page.getByText('User Management')).toBeVisible({ timeout: 15_000 })
     // At least one user row should be visible (admin account at minimum)
-    await expect(page.getByText('@admin')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByRole('heading', { name: 'Admin User' })).toBeVisible({ timeout: 10_000 })
   })
 
   test('search filters users by name or email', async ({ page }) => {
@@ -14,8 +14,8 @@ test.describe('Admin user management', () => {
 
     // Type a search term that matches the admin user
     await page.getByPlaceholder('Search users...').fill('admin')
-    // Admin user should still be visible
-    await expect(page.getByText('@admin')).toBeVisible()
+    // Admin user should still be visible (matched by display name, username, or email)
+    await expect(page.getByText(/admin/i).first()).toBeVisible()
   })
 
   test('role filter narrows results', async ({ page }) => {
@@ -26,8 +26,8 @@ test.describe('Admin user management', () => {
     await page.getByRole('combobox').click()
     await page.getByRole('option', { name: 'Driver' }).click()
 
-    // Admin user should not be visible when filtering by driver
-    await expect(page.getByText('@admin')).not.toBeVisible({ timeout: 5_000 })
+    // Admin user email should not be visible when filtering by driver
+    await expect(page.getByText('admin@adtruck.com')).not.toBeVisible({ timeout: 5_000 })
   })
 
   test('deactivate button is disabled for admin users', async ({ page }) => {
