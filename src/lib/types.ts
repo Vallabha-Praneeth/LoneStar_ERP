@@ -55,8 +55,4 @@ export interface CampaignPhoto {
   note: string | null;
   submitted_at: string;
   captured_at: string | null;
-  status: "pending" | "approved" | "rejected";
-  reviewed_by: string | null;
-  reviewed_at: string | null;
-  rejection_reason: string | null;
 }

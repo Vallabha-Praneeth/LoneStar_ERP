@@ -235,19 +235,19 @@ export default function ClientCampaignView() {
               </Link>
             </motion.div>
 
-            {/* Photo gallery — approved only (enforced by RLS) */}
+            {/* Photo gallery */}
             <div>
               <h2 className="text-lg font-semibold text-foreground mb-4">
                 Campaign Photos
                 <span className="text-sm font-normal text-muted-foreground ml-2">
-                  ({photos.length} approved)
+                  ({photos.length})
                 </span>
               </h2>
 
               {photos.length === 0 ? (
                 <div className="bg-card rounded-xl border border-border shadow-card p-8 text-center">
                   <Image className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No approved photos yet</p>
+                  <p className="text-sm text-muted-foreground">No photos yet</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -275,7 +275,7 @@ export default function ClientCampaignView() {
                       </div>
                       <div className="p-3">
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(photo.submitted_at), "h:mm a")} · Approved
+                          {format(new Date(photo.submitted_at), "h:mm a")}
                         </p>
                       </div>
                     </motion.div>

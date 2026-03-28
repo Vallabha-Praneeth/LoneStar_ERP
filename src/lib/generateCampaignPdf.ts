@@ -14,7 +14,7 @@ interface CampaignPdfData {
   clients: { name: string } | null;
   driver_profile: { display_name: string } | null;
   driver_shifts: { id: string; started_at: string; ended_at: string | null }[];
-  campaign_photos: { id: string; status: string; submitted_at: string; note: string | null }[];
+  campaign_photos: { id: string; submitted_at: string; note: string | null }[];
 }
 
 function fmtTime(ts: string | null | undefined): string {
@@ -180,11 +180,9 @@ export function generateCampaignPdf(campaign: CampaignPdfData): void {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(17, 24, 39);
-    const approved = campaign.campaign_photos.filter((p) => p.status === "approved").length;
-    const pending = campaign.campaign_photos.filter((p) => p.status === "pending").length;
-    const rejected = campaign.campaign_photos.filter((p) => p.status === "rejected").length;
+    const photoCount = campaign.campaign_photos.length;
     doc.text(
-      `Photo Log (${approved} approved, ${pending} pending, ${rejected} rejected)`,
+      `Photo Log (${photoCount} photo${photoCount !== 1 ? "s" : ""})`,
       margin,
       y
     );
@@ -197,13 +195,12 @@ export function generateCampaignPdf(campaign: CampaignPdfData): void {
     const photoRows = sortedPhotos.map((p, i) => [
       String(i + 1),
       format(new Date(p.submitted_at), "h:mm a"),
-      p.status.charAt(0).toUpperCase() + p.status.slice(1),
       p.note ?? "—",
     ]);
 
     autoTable(doc, {
       startY: y,
-      head: [["#", "Time", "Status", "Note"]],
+      head: [["#", "Time", "Note"]],
       body: photoRows,
       theme: "grid",
       margin: { left: margin, right: margin },
@@ -212,15 +209,6 @@ export function generateCampaignPdf(campaign: CampaignPdfData): void {
       columnStyles: {
         0: { cellWidth: 10, halign: "center" },
         1: { cellWidth: 25 },
-        2: { cellWidth: 22 },
-      },
-      didParseCell: (data) => {
-        if (data.section === "body" && data.column.index === 2) {
-          const val = data.cell.raw as string;
-          if (val === "Approved") data.cell.styles.textColor = [22, 163, 74];
-          else if (val === "Pending") data.cell.styles.textColor = [202, 138, 4];
-          else if (val === "Rejected") data.cell.styles.textColor = [220, 38, 38];
-        }
       },
     });
   }

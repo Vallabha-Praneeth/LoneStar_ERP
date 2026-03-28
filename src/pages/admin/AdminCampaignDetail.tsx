@@ -41,7 +41,7 @@ interface CampaignDetail {
   clients: { name: string } | null;
   driver_profile: { display_name: string } | null;
   driver_shifts: { id: string; started_at: string; ended_at: string | null }[];
-  campaign_photos: { id: string; status: string; submitted_at: string; note: string | null; storage_path: string }[];
+  campaign_photos: { id: string; submitted_at: string; note: string | null; storage_path: string }[];
 }
 
 async function fetchCampaign(id: string): Promise<CampaignDetail | null> {
@@ -53,7 +53,7 @@ async function fetchCampaign(id: string): Promise<CampaignDetail | null> {
       clients ( name ),
       driver_profile:profiles!driver_profile_id ( display_name ),
       driver_shifts ( id, started_at, ended_at ),
-      campaign_photos ( id, status, submitted_at, note, storage_path )
+      campaign_photos ( id, submitted_at, note, storage_path )
     `)
     .eq("id", id)
     .single();
@@ -342,8 +342,7 @@ export default function AdminCampaignDetail() {
                     <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                   </div>
                 )}
-                <div className="p-3 flex items-center justify-between">
-                  <StatusBadge status={photo.status as "pending" | "approved"} />
+                <div className="p-3">
                   <span className="text-xs text-muted-foreground">
                     {format(new Date(photo.submitted_at), "h:mm a")}
                   </span>

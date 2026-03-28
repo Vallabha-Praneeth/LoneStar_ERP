@@ -17,7 +17,7 @@ interface DriverCampaignData {
   route_code: string | null;
   status: "draft" | "pending" | "active" | "completed";
   driver_shifts: { id: string; started_at: string; ended_at: string | null }[];
-  campaign_photos: { id: string; status: string; submitted_at: string }[];
+  campaign_photos: { id: string; submitted_at: string }[];
 }
 
 async function fetchDriverCampaign(driverId: string): Promise<DriverCampaignData | null> {
@@ -27,7 +27,7 @@ async function fetchDriverCampaign(driverId: string): Promise<DriverCampaignData
     .select(`
       id, title, campaign_date, route_code, status,
       driver_shifts ( id, started_at, ended_at ),
-      campaign_photos ( id, status, submitted_at )
+      campaign_photos ( id, submitted_at )
     `)
     .eq("driver_profile_id", driverId)
     .in("status", ["active", "pending", "draft"])
@@ -43,7 +43,7 @@ async function fetchDriverCampaign(driverId: string): Promise<DriverCampaignData
     .select(`
       id, title, campaign_date, route_code, status,
       driver_shifts ( id, started_at, ended_at ),
-      campaign_photos ( id, status, submitted_at )
+      campaign_photos ( id, submitted_at )
     `)
     .eq("driver_profile_id", driverId)
     .order("campaign_date", { ascending: false })
@@ -292,7 +292,7 @@ export default function DriverCampaign() {
                       {format(new Date(photo.submitted_at), "h:mm a")}
                     </span>
                   </div>
-                  <StatusBadge status={photo.status as "pending" | "approved"} />
+                  <span className="text-xs text-muted-foreground">Uploaded</span>
                 </div>
               ))}
             </div>

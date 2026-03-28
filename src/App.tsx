@@ -22,7 +22,7 @@ const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const AdminCampaignList = lazy(() => import("./pages/admin/AdminCampaignList"));
 const AdminCreateCampaign = lazy(() => import("./pages/admin/AdminCreateCampaign"));
 const AdminCampaignDetail = lazy(() => import("./pages/admin/AdminCampaignDetail"));
-const AdminPhotoApproval = lazy(() => import("./pages/admin/AdminPhotoApproval"));
+const AdminPhotoManagement = lazy(() => import("./pages/admin/AdminPhotoManagement"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
 const AdminEditCampaign = lazy(() => import("./pages/admin/AdminEditCampaign"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
@@ -33,6 +33,8 @@ const AdminLayout = lazy(() =>
 const ClientLogin = lazy(() => import("./pages/client/ClientLogin"));
 const ClientCampaignView = lazy(() => import("./pages/client/ClientCampaignView"));
 const ClientTimingSheet = lazy(() => import("./pages/client/ClientTimingSheet"));
+
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 const queryClient = new QueryClient();
 
@@ -81,6 +83,7 @@ const App = () => (
             <Suspense fallback={<PageSpinner />}>
               <Routes>
                 <Route path="/" element={<RoleSelect />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
                 {/* Driver */}
                 <Route path="/driver/login" element={<DriverLogin />} />
@@ -123,7 +126,7 @@ const App = () => (
                   <Route path="campaigns/create" element={<AdminCreateCampaign />} />
                   <Route path="campaigns/:id" element={<AdminCampaignDetail />} />
                   <Route path="campaigns/:id/edit" element={<AdminEditCampaign />} />
-                  <Route path="campaigns/:id/photos" element={<AdminPhotoApproval />} />
+                  <Route path="campaigns/:id/photos" element={<AdminPhotoManagement />} />
                   <Route path="reports" element={<AdminReports />} />
                   <Route path="users" element={<AdminUsers />} />
                 </Route>

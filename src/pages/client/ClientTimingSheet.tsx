@@ -40,12 +40,11 @@ async function fetchClientTimingData(clientId: string): Promise<ShiftData | null
 
   if (shiftErr && shiftErr.code !== "PGRST116") throw shiftErr;
 
-  // Get the first approved photo time
+  // Get the first photo time
   const { data: firstPhoto } = await supabase
     .from("campaign_photos")
     .select("submitted_at")
     .eq("campaign_id", campaign.id)
-    .eq("status", "approved")
     .order("submitted_at", { ascending: true })
     .limit(1)
     .single();

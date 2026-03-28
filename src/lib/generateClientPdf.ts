@@ -63,7 +63,7 @@ export function generateClientPdf(campaign: ClientPdfData): void {
       ["Campaign", campaign.title],
       ["Date", format(new Date(campaign.campaign_date), "MMMM d, yyyy")],
       ["Status", campaign.status.charAt(0).toUpperCase() + campaign.status.slice(1)],
-      ["Approved Photos", String(campaign.photos.length)],
+      ["Photos", String(campaign.photos.length)],
     ],
     theme: "grid",
     margin: { left: margin, right: margin },
@@ -79,7 +79,7 @@ export function generateClientPdf(campaign: ClientPdfData): void {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(17, 24, 39);
-    doc.text("Approved Photos", margin, y);
+    doc.text("Photos", margin, y);
     y += 2;
 
     const sortedPhotos = [...campaign.photos].sort(
@@ -89,12 +89,11 @@ export function generateClientPdf(campaign: ClientPdfData): void {
     const photoRows = sortedPhotos.map((p, i) => [
       String(i + 1),
       format(new Date(p.submitted_at), "h:mm a"),
-      "Approved",
     ]);
 
     autoTable(doc, {
       startY: y,
-      head: [["#", "Time", "Status"]],
+      head: [["#", "Time"]],
       body: photoRows,
       theme: "grid",
       margin: { left: margin, right: margin },
@@ -103,12 +102,6 @@ export function generateClientPdf(campaign: ClientPdfData): void {
       columnStyles: {
         0: { cellWidth: 10, halign: "center" },
         1: { cellWidth: 30 },
-        2: { cellWidth: 25 },
-      },
-      didParseCell: (data) => {
-        if (data.section === "body" && data.column.index === 2) {
-          data.cell.styles.textColor = [22, 163, 74];
-        }
       },
     });
   }

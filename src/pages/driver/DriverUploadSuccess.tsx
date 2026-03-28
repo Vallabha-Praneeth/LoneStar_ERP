@@ -17,11 +17,7 @@ export default function DriverUploadSuccess() {
 
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-foreground">Photo Uploaded</h2>
-          <p className="text-sm text-muted-foreground">Your photo has been submitted and is pending admin approval.</p>
-        </div>
-
-        <div className="bg-warning/10 rounded-xl px-4 py-3">
-          <p className="text-xs font-medium text-warning">⏳ Pending Approval</p>
+          <p className="text-sm text-muted-foreground">Your photo has been submitted successfully.</p>
         </div>
 
         <Link to="/driver/campaign">

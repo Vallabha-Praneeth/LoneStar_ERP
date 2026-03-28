@@ -23,7 +23,7 @@ interface ReportCampaign {
   status: string;
   clients: { name: string } | null;
   driver_profile: { display_name: string } | null;
-  campaign_photos: { id: string; status: string }[];
+  campaign_photos: { id: string }[];
   driver_shifts: { id: string; started_at: string; ended_at: string | null }[];
 }
 
@@ -34,7 +34,7 @@ async function fetchReportData(): Promise<ReportCampaign[]> {
       id, title, campaign_date, status,
       clients ( name ),
       driver_profile:profiles!driver_profile_id ( display_name ),
-      campaign_photos ( id, status ),
+      campaign_photos ( id ),
       driver_shifts ( id, started_at, ended_at )
     `)
     .order("campaign_date", { ascending: false });

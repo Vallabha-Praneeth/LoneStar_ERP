@@ -12,7 +12,6 @@ interface PhotoRow {
   storage_path: string;
   note: string | null;
   submitted_at: string;
-  status: "pending" | "approved" | "rejected";
 }
 
 interface CampaignInfo {
@@ -22,7 +21,7 @@ interface CampaignInfo {
 async function fetchPhotos(campaignId: string): Promise<PhotoRow[]> {
   const { data, error } = await supabase
     .from("campaign_photos")
-    .select("id, storage_path, note, submitted_at, status")
+    .select("id, storage_path, note, submitted_at")
     .eq("campaign_id", campaignId)
     .order("submitted_at", { ascending: true });
 
@@ -54,7 +53,7 @@ async function deletePhoto(photoId: string, storagePath: string): Promise<void> 
   if (error) throw error;
 }
 
-export default function AdminPhotoApproval() {
+export default function AdminPhotoManagement() {
   const navigate = useNavigate();
   const { id: campaignId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
@@ -149,7 +148,6 @@ export default function AdminPhotoApproval() {
                 imageUrl={signedUrls[photo.id] ?? ""}
                 time={format(new Date(photo.submitted_at), "h:mm a")}
                 note={photo.note ?? undefined}
-                status={photo.status}
                 showDelete
                 onDelete={() =>
                   deleteMutation.mutate({ photoId: photo.id, storagePath: photo.storage_path })

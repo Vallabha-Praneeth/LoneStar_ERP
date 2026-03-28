@@ -1,24 +1,19 @@
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "./StatusBadge";
 
 interface PhotoCardProps {
   imageUrl: string;
   time: string;
   note?: string;
-  status: "pending" | "approved" | "rejected";
   showDelete?: boolean;
   onDelete?: () => void;
 }
 
-export function PhotoCard({ imageUrl, time, note, status, showDelete, onDelete }: PhotoCardProps) {
+export function PhotoCard({ imageUrl, time, note, showDelete, onDelete }: PhotoCardProps) {
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden shadow-card group">
       <div className="aspect-[4/3] bg-muted relative overflow-hidden">
         <img src={imageUrl} alt="Campaign photo" className="w-full h-full object-cover" />
-        <div className="absolute top-2 right-2">
-          <StatusBadge status={status} />
-        </div>
       </div>
       <div className="p-3 space-y-2">
         <p className="text-xs text-muted-foreground">{time}</p>

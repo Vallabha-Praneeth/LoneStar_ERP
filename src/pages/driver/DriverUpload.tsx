@@ -85,7 +85,6 @@ async function uploadPhoto(
     note: note.trim() || null,
     submitted_at: new Date().toISOString(),
     captured_at: new Date().toISOString(),
-    status: "approved",
   });
 
   if (insertError) {
