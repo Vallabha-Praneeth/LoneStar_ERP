@@ -30,7 +30,7 @@ export default function AdminLogin() {
 
   async function handleForgotPassword(email: string) {
     await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/admin/login`,
+      redirectTo: `${window.location.origin}/reset-password`,
     });
   }
 

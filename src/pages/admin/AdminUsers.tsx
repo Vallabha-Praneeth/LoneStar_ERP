@@ -1,8 +1,12 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Search, Loader2, UserCheck, UserX, Users, Shield, Truck, Eye } from "lucide-react";
+import {
+  Search, Loader2, UserCheck, UserX, Users, Shield, Truck, Eye,
+  Plus, KeyRound,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -10,10 +14,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { CreateDriverDialog } from "@/components/CreateDriverDialog";
+import { CreateClientUserDialog } from "@/components/CreateClientUserDialog";
 
 interface UserRow {
   id: string;
@@ -101,6 +115,15 @@ export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState("all");
   const queryClient = useQueryClient();
 
+  // Create dialogs
+  const [showCreateDriver, setShowCreateDriver] = useState(false);
+  const [showCreateClientUser, setShowCreateClientUser] = useState(false);
+
+  // Reset password dialog
+  const [resetTarget, setResetTarget] = useState<UserRow | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+
   const {
     data: users = [],
     isLoading,
@@ -145,17 +168,65 @@ export default function AdminUsers() {
     return counts;
   }, [users]);
 
+  async function handleResetPassword() {
+    if (!resetTarget) return;
+    if (resetPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    setResetLoading(true);
+    const { data, error } = await supabase.functions.invoke("reset-user-password", {
+      body: { user_id: resetTarget.id, new_password: resetPassword },
+    });
+    setResetLoading(false);
+
+    if (error) {
+      toast.error(error.message || "Failed to reset password");
+      return;
+    }
+    if (data?.error) {
+      toast.error(data.error);
+      return;
+    }
+
+    toast.success(`Password reset for ${resetTarget.display_name}`);
+    setResetTarget(null);
+    setResetPassword("");
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">
-          User Management
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {users.length} users &middot; {roleCounts.driver} drivers &middot;{" "}
-          {roleCounts.client} clients &middot; {roleCounts.admin} admins
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+            User Management
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {users.length} users &middot; {roleCounts.driver} drivers &middot;{" "}
+            {roleCounts.client} clients &middot; {roleCounts.admin} admins
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setShowCreateClientUser(true)}
+            variant="outline"
+            className="rounded-xl"
+            size="sm"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            New Client User
+          </Button>
+          <Button
+            onClick={() => setShowCreateDriver(true)}
+            className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+            size="sm"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            New Driver
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -263,36 +334,114 @@ export default function AdminUsers() {
                 </div>
               </div>
 
-              {/* Action */}
-              <Button
-                variant="outline"
-                size="sm"
-                className={`rounded-lg text-xs shrink-0 ${
-                  u.is_active
-                    ? "border-destructive/20 text-destructive hover:bg-destructive/5"
-                    : "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                }`}
-                disabled={toggleMutation.isPending || u.role === "admin"}
-                onClick={() =>
-                  toggleMutation.mutate({ id: u.id, isActive: u.is_active })
-                }
-              >
-                {u.is_active ? (
-                  <>
-                    <UserX className="w-3.5 h-3.5 mr-1" />
-                    Deactivate
-                  </>
-                ) : (
-                  <>
-                    <UserCheck className="w-3.5 h-3.5 mr-1" />
-                    Activate
-                  </>
-                )}
-              </Button>
+              {/* Actions */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-lg text-xs"
+                  disabled={u.role === "admin"}
+                  onClick={() => {
+                    setResetTarget(u);
+                    setResetPassword("");
+                  }}
+                >
+                  <KeyRound className="w-3.5 h-3.5 mr-1" />
+                  <span className="hidden sm:inline">Reset PW</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`rounded-lg text-xs ${
+                    u.is_active
+                      ? "border-destructive/20 text-destructive hover:bg-destructive/5"
+                      : "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                  }`}
+                  disabled={toggleMutation.isPending || u.role === "admin"}
+                  onClick={() =>
+                    toggleMutation.mutate({ id: u.id, isActive: u.is_active })
+                  }
+                >
+                  {u.is_active ? (
+                    <>
+                      <UserX className="w-3.5 h-3.5 mr-1" />
+                      <span className="hidden sm:inline">Deactivate</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck className="w-3.5 h-3.5 mr-1" />
+                      <span className="hidden sm:inline">Activate</span>
+                    </>
+                  )}
+                </Button>
+              </div>
             </motion.div>
           );
         })}
       </div>
+
+      {/* Create Driver Dialog */}
+      <CreateDriverDialog
+        open={showCreateDriver}
+        onOpenChange={setShowCreateDriver}
+        onCreated={() => {
+          queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+        }}
+      />
+
+      {/* Create Client User Dialog */}
+      <CreateClientUserDialog
+        open={showCreateClientUser}
+        onOpenChange={setShowCreateClientUser}
+        onCreated={() => {
+          queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+        }}
+      />
+
+      {/* Reset Password Dialog */}
+      <Dialog open={!!resetTarget} onOpenChange={(open) => { if (!open) { setResetTarget(null); setResetPassword(""); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Set a new password for {resetTarget?.display_name} (@{resetTarget?.username}).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-pw">New Password</Label>
+              <Input
+                id="reset-pw"
+                type="password"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                placeholder="Minimum 6 characters"
+                className="h-10 rounded-xl bg-secondary/50 border-border"
+                autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter") handleResetPassword(); }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => { setResetTarget(null); setResetPassword(""); }}
+              className="rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleResetPassword}
+              disabled={resetLoading || resetPassword.length < 6}
+              className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {resetLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Reset Password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

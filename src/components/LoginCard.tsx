@@ -15,7 +15,8 @@ interface LoginCardProps {
   loading?: boolean;
   error?: string;
   showForgotPassword?: boolean;
-  onForgotPassword?: (email: string) => void;
+  onForgotPassword?: (email: string) => Promise<void>;
+  footerNote?: string;
 }
 
 export function LoginCard({
@@ -27,6 +28,7 @@ export function LoginCard({
   error,
   showForgotPassword = false,
   onForgotPassword,
+  footerNote,
 }: LoginCardProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -175,11 +177,17 @@ export function LoginCard({
                       disabled={!resetEmail || resetLoading}
                       onClick={async () => {
                         setResetLoading(true);
-                        if (onForgotPassword) {
-                          onForgotPassword(resetEmail);
+                        try {
+                          if (onForgotPassword) {
+                            await onForgotPassword(resetEmail);
+                          }
+                          setResetSent(true);
+                        } catch {
+                          // Toast is handled by caller if needed;
+                          // keep form open so user can retry
+                        } finally {
+                          setResetLoading(false);
                         }
-                        setResetSent(true);
-                        setResetLoading(false);
                       }}
                     >
                       {resetLoading ? "Sending…" : "Send Reset Link"}
@@ -191,7 +199,7 @@ export function LoginCard({
           )}
 
           <p className="text-xs text-center text-muted-foreground">
-            Need help? Contact your administrator.
+            {footerNote ?? "Need help? Contact your administrator."}
           </p>
         </div>
       </motion.div>

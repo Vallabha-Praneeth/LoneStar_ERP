@@ -48,6 +48,7 @@ export default function DriverLogin() {
       onLogin={handleLogin}
       loading={loading}
       error={error}
+      footerNote="Forgot your password? Ask your administrator to reset it."
     />
   );
 }

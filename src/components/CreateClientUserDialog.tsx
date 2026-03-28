@@ -10,29 +10,59 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreated: (driver: { id: string; display_name: string }) => void;
+  onCreated: () => void;
 }
 
-export function CreateDriverDialog({ open, onOpenChange, onCreated }: Props) {
-  const [username, setUsername] = useState("");
+interface ClientOption {
+  id: string;
+  name: string;
+}
+
+async function fetchActiveClients(): Promise<ClientOption[]> {
+  const { data, error } = await supabase
+    .from("clients")
+    .select("id, name")
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as ClientOption[];
+}
+
+export function CreateClientUserDialog({ open, onOpenChange, onCreated }: Props) {
+  const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
+  const [clientId, setClientId] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const { data: clients = [], isLoading: clientsLoading } = useQuery({
+    queryKey: ["active-clients"],
+    queryFn: fetchActiveClients,
+    enabled: open,
+  });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmedUsername = username.trim();
+    const trimmedEmail = email.trim();
     const trimmedName = displayName.trim();
 
-    if (!trimmedUsername) {
-      toast.error("Username is required");
+    if (!trimmedEmail) {
+      toast.error("Email is required");
       return;
     }
     if (!trimmedName) {
@@ -43,22 +73,28 @@ export function CreateDriverDialog({ open, onOpenChange, onCreated }: Props) {
       toast.error("Password must be at least 6 characters");
       return;
     }
+    if (!clientId) {
+      toast.error("Please select a client organization");
+      return;
+    }
 
     setSaving(true);
 
     const { data, error } = await supabase.functions.invoke("create-user", {
       body: {
-        role: "driver",
-        username: trimmedUsername,
+        role: "client",
+        username: trimmedEmail,
         display_name: trimmedName,
         password,
+        email: trimmedEmail,
+        client_id: clientId,
       },
     });
 
     setSaving(false);
 
     if (error) {
-      toast.error(error.message || "Failed to create driver");
+      toast.error(error.message || "Failed to create client user");
       return;
     }
 
@@ -68,11 +104,12 @@ export function CreateDriverDialog({ open, onOpenChange, onCreated }: Props) {
     }
 
     const user = data?.user;
-    toast.success(`Driver "${user?.display_name ?? trimmedName}" created`);
-    setUsername("");
+    toast.success(`Client user "${user?.display_name ?? trimmedName}" created`);
+    setEmail("");
     setDisplayName("");
     setPassword("");
-    onCreated({ id: user?.id, display_name: user?.display_name ?? trimmedName });
+    setClientId("");
+    onCreated();
     onOpenChange(false);
   }
 
@@ -80,43 +117,59 @@ export function CreateDriverDialog({ open, onOpenChange, onCreated }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Driver</DialogTitle>
+          <DialogTitle>Add Client User</DialogTitle>
           <DialogDescription>
-            Create a new driver account that can be assigned to campaigns.
+            Create a login account for a client to access their campaign portal.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="driver-username">Username</Label>
+            <Label htmlFor="client-user-email">Email</Label>
             <Input
-              id="driver-username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. driver2"
+              id="client-user-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="e.g. contact@acme.com"
               className="h-10 rounded-xl bg-secondary/50 border-border"
               autoFocus
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="driver-display-name">Display Name</Label>
+            <Label htmlFor="client-user-name">Display Name</Label>
             <Input
-              id="driver-display-name"
+              id="client-user-name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="e.g. John Smith"
+              placeholder="e.g. Jane Doe"
               className="h-10 rounded-xl bg-secondary/50 border-border"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="driver-password">Password</Label>
+            <Label htmlFor="client-user-password">Password</Label>
             <Input
-              id="driver-password"
+              id="client-user-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimum 6 characters"
               className="h-10 rounded-xl bg-secondary/50 border-border"
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Client Organization</Label>
+            <Select value={clientId} onValueChange={setClientId}>
+              <SelectTrigger className="h-10 rounded-xl bg-secondary/50 border-border">
+                <SelectValue placeholder={clientsLoading ? "Loading..." : "Select a client"} />
+              </SelectTrigger>
+              <SelectContent>
+                {clients.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter>
             <Button
@@ -133,7 +186,7 @@ export function CreateDriverDialog({ open, onOpenChange, onCreated }: Props) {
               className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Add Driver
+              Add Client User
             </Button>
           </DialogFooter>
         </form>
