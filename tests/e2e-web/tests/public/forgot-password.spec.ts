@@ -11,10 +11,11 @@ test.describe('Forgot password flow', () => {
     await expect(page.getByText('Forgot your password?')).toBeVisible({ timeout: 10_000 })
   })
 
-  test('driver login does NOT show "Forgot your password?" link', async ({ page }) => {
+  test('driver login does NOT show clickable "Forgot your password?" link', async ({ page }) => {
     await page.goto('/driver/login')
     await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByText('Forgot your password?')).not.toBeVisible()
+    // Driver login has informational footer text ("Ask your administrator") but no clickable reset link
+    await expect(page.getByRole('button', { name: /forgot your password/i })).not.toBeVisible()
   })
 
   test('clicking "Forgot your password?" shows reset form on admin login', async ({ page }) => {

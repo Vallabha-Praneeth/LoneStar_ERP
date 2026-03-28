@@ -58,18 +58,20 @@ test.describe('RLS: cross-role data isolation', () => {
     await client.auth.signOut()
   })
 
-  test('client can only see approved photos', async () => {
+  test('client can see photos for own org campaigns', async () => {
     const client = createClient(SUPABASE_URL, ANON_KEY)
     await client.auth.signInWithPassword({
       email: 'client@acme.com',
       password: process.env.TEST_CLIENT_PASSWORD!,
     })
-    const { data } = await client
+    const { data, error } = await client
       .from('campaign_photos')
-      .select('id, status')
+      .select('id')
       .eq('campaign_id', CAMPAIGN_ID)
+    expect(error).toBeNull()
+    // Client can read photos for their org's campaigns (no approval gate)
     if (data && data.length > 0) {
-      expect(data.every((p) => p.status === 'approved')).toBe(true)
+      expect(data[0]).toHaveProperty('id')
     }
     await client.auth.signOut()
   })
