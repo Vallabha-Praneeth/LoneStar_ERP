@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Search, Loader2, UserCheck, UserX, Users, Shield, Truck, Eye,
-  Plus, KeyRound,
+  Plus, KeyRound, ExternalLink,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -336,6 +337,19 @@ export default function AdminUsers() {
 
               {/* Actions */}
               <div className="flex items-center gap-1.5 shrink-0">
+                {u.role === "driver" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-lg text-xs"
+                    asChild
+                  >
+                    <Link to={`/admin/drivers/${u.id}`}>
+                      <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                      <span className="hidden sm:inline">Details</span>
+                    </Link>
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"

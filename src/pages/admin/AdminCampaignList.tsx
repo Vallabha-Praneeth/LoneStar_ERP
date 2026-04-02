@@ -32,23 +32,22 @@ interface CampaignRow {
   title: string;
   campaign_date: string;
   status: "draft" | "pending" | "active" | "completed";
-  driver_daily_wage: number | null;
-  transport_cost: number | null;
-  other_cost: number | null;
+  client_billed_amount: number | null;
   clients: { name: string } | null;
   driver_profile: { display_name: string } | null;
   campaign_photos: { id: string; storage_path: string }[];
+  campaign_costs: { amount: number }[];
 }
 
 async function fetchCampaigns(): Promise<CampaignRow[]> {
   const { data, error } = await supabase
     .from("campaigns")
     .select(`
-      id, title, campaign_date, status,
-      driver_daily_wage, transport_cost, other_cost,
+      id, title, campaign_date, status, client_billed_amount,
       clients ( name ),
       driver_profile:profiles!driver_profile_id ( display_name ),
-      campaign_photos ( id, storage_path )
+      campaign_photos ( id, storage_path ),
+      campaign_costs ( amount )
     `)
     .order("campaign_date", { ascending: false });
 
@@ -57,7 +56,7 @@ async function fetchCampaigns(): Promise<CampaignRow[]> {
 }
 
 function totalCost(c: CampaignRow): number {
-  return (c.driver_daily_wage ?? 0) + (c.transport_cost ?? 0) + (c.other_cost ?? 0);
+  return (c.campaign_costs ?? []).reduce((sum, cc) => sum + cc.amount, 0);
 }
 
 export default function AdminCampaignList() {
@@ -235,6 +234,11 @@ export default function AdminCampaignList() {
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground/70">
                         <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
                         {cost.toFixed(2)}
+                      </span>
+                    )}
+                    {c.client_billed_amount != null && c.client_billed_amount > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                        Billed: ${c.client_billed_amount.toFixed(2)}
                       </span>
                     )}
                   </div>

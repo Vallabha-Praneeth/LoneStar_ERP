@@ -126,6 +126,12 @@ export default function DriverUpload() {
           body: { campaignId: campaign!.id, photoId },
         })
         .catch(() => {}); // silent — don't block the driver flow
+      // Fire-and-forget: sync photo to Google Drive
+      supabase.functions
+        .invoke("sync-photo-to-drive", {
+          body: { campaignId: campaign!.id, photoId },
+        })
+        .catch(() => {});
       navigate("/driver/upload-success");
     },
     onError: (err: Error) => toast.error(err.message),

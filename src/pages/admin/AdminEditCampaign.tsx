@@ -12,10 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Plus } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { CampaignCostEditor, CostRow } from "@/components/CampaignCostEditor";
 
 interface ClientOption {
   id: string;
@@ -27,24 +28,45 @@ interface DriverOption {
   display_name: string;
 }
 
+interface RouteOption {
+  id: string;
+  name: string;
+  city: string | null;
+}
+
+interface CostTypeOption {
+  id: string;
+  name: string;
+}
+
+interface ExistingCost {
+  id: string;
+  cost_type_id: string;
+  amount: number;
+  notes: string | null;
+}
+
 interface CampaignData {
   id: string;
   title: string;
   campaign_date: string;
   status: string;
-  route_code: string | null;
+  route_id: string | null;
   internal_notes: string | null;
   client_id: string;
   driver_profile_id: string | null;
-  driver_daily_wage: number | null;
-  transport_cost: number | null;
-  other_cost: number | null;
+  client_billed_amount: number | null;
+  campaign_costs: ExistingCost[];
 }
 
 async function fetchCampaign(id: string): Promise<CampaignData> {
   const { data, error } = await supabase
     .from("campaigns")
-    .select("id, title, campaign_date, status, route_code, internal_notes, client_id, driver_profile_id, driver_daily_wage, transport_cost, other_cost")
+    .select(`
+      id, title, campaign_date, status, route_id,
+      internal_notes, client_id, driver_profile_id, client_billed_amount,
+      campaign_costs ( id, cost_type_id, amount, notes )
+    `)
     .eq("id", id)
     .single();
   if (error) throw error;
@@ -72,6 +94,26 @@ async function fetchDrivers(): Promise<DriverOption[]> {
   return (data ?? []) as DriverOption[];
 }
 
+async function fetchRoutes(): Promise<RouteOption[]> {
+  const { data, error } = await supabase
+    .from("routes")
+    .select("id, name, city")
+    .eq("is_active", true)
+    .order("name");
+  if (error) throw error;
+  return (data ?? []) as RouteOption[];
+}
+
+async function fetchCostTypes(): Promise<CostTypeOption[]> {
+  const { data, error } = await supabase
+    .from("cost_types")
+    .select("id, name")
+    .eq("is_active", true)
+    .order("name");
+  if (error) throw error;
+  return (data ?? []) as CostTypeOption[];
+}
+
 export default function AdminEditCampaign() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -81,11 +123,12 @@ export default function AdminEditCampaign() {
   const [clientId, setClientId] = useState("");
   const [driverId, setDriverId] = useState("");
   const [campaignDate, setCampaignDate] = useState("");
-  const [routeCode, setRouteCode] = useState("");
+  const [routeId, setRouteId] = useState("");
+  const [newRouteName, setNewRouteName] = useState("");
+  const [showNewRoute, setShowNewRoute] = useState(false);
   const [internalNotes, setInternalNotes] = useState("");
-  const [driverWage, setDriverWage] = useState("");
-  const [transportCost, setTransportCost] = useState("");
-  const [otherCost, setOtherCost] = useState("");
+  const [clientBilledAmount, setClientBilledAmount] = useState("");
+  const [costs, setCosts] = useState<CostRow[]>([]);
 
   const campaignQuery = useQuery({
     queryKey: ["campaign-edit", id],
@@ -95,6 +138,8 @@ export default function AdminEditCampaign() {
 
   const clientsQuery = useQuery({ queryKey: ["clients-active"], queryFn: fetchClients });
   const driversQuery = useQuery({ queryKey: ["drivers-active"], queryFn: fetchDrivers });
+  const routesQuery = useQuery({ queryKey: ["routes-active"], queryFn: fetchRoutes });
+  const costTypesQuery = useQuery({ queryKey: ["cost-types-active"], queryFn: fetchCostTypes });
 
   useEffect(() => {
     if (campaignQuery.data && clientsQuery.data && driversQuery.data) {
@@ -103,33 +148,92 @@ export default function AdminEditCampaign() {
       setClientId(c.client_id);
       setDriverId(c.driver_profile_id ?? "");
       setCampaignDate(c.campaign_date);
-      setRouteCode(c.route_code ?? "");
+      setRouteId(c.route_id ?? "");
       setInternalNotes(c.internal_notes ?? "");
-      setDriverWage(c.driver_daily_wage?.toString() ?? "");
-      setTransportCost(c.transport_cost?.toString() ?? "");
-      setOtherCost(c.other_cost?.toString() ?? "");
+      setClientBilledAmount(c.client_billed_amount?.toString() ?? "");
+
+      // Populate cost rows from existing campaign_costs
+      if (c.campaign_costs && c.campaign_costs.length > 0) {
+        setCosts(
+          c.campaign_costs.map((cc) => ({
+            cost_type_id: cc.cost_type_id,
+            amount: cc.amount.toString(),
+            notes: cc.notes ?? "",
+          }))
+        );
+      }
     }
   }, [campaignQuery.data, clientsQuery.data, driversQuery.data]);
-
-  const mutation = useMutation({
-    mutationFn: async (input: Record<string, unknown>) => {
-      const { error } = await supabase.from("campaigns").update(input).eq("id", id!);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["campaign", id] });
-      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
-      toast.success("Campaign updated");
-      navigate(`/admin/campaigns/${id}`);
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
 
   function parseOptionalNumber(val: string): number | null {
     const n = parseFloat(val);
     if (isNaN(n) || n < 0) return null;
     return n;
   }
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      // Create route if needed
+      let finalRouteId: string | null = routeId || null;
+      if (showNewRoute && newRouteName.trim()) {
+        const { data: newRoute, error: routeErr } = await supabase
+          .from("routes")
+          .insert({ name: newRouteName.trim() })
+          .select("id")
+          .single();
+        if (routeErr) throw routeErr;
+        finalRouteId = newRoute.id;
+      }
+
+      // Update campaign
+      const { error: updateErr } = await supabase
+        .from("campaigns")
+        .update({
+          title: title.trim(),
+          campaign_date: campaignDate,
+          client_id: clientId,
+          driver_profile_id: driverId || null,
+          route_id: finalRouteId,
+          internal_notes: internalNotes.trim() || null,
+          client_billed_amount: parseOptionalNumber(clientBilledAmount),
+        })
+        .eq("id", id!);
+      if (updateErr) throw updateErr;
+
+      // Replace campaign costs: delete old, insert new
+      const { error: delErr } = await supabase
+        .from("campaign_costs")
+        .delete()
+        .eq("campaign_id", id!);
+      if (delErr) throw delErr;
+
+      const validCosts = costs.filter(
+        (c) => c.cost_type_id && c.amount && parseFloat(c.amount) >= 0
+      );
+      if (validCosts.length > 0) {
+        const { error: costsErr } = await supabase
+          .from("campaign_costs")
+          .insert(
+            validCosts.map((c) => ({
+              campaign_id: id!,
+              cost_type_id: c.cost_type_id,
+              amount: parseFloat(c.amount),
+              notes: c.notes.trim() || null,
+            }))
+          );
+        if (costsErr) throw costsErr;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campaign", id] });
+      queryClient.invalidateQueries({ queryKey: ["campaign-edit", id] });
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({ queryKey: ["routes-active"] });
+      toast.success("Campaign updated");
+      navigate(`/admin/campaigns/${id}`);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -146,21 +250,13 @@ export default function AdminEditCampaign() {
       return;
     }
 
-    mutation.mutate({
-      title: title.trim(),
-      campaign_date: campaignDate,
-      client_id: clientId,
-      driver_profile_id: driverId || null,
-      route_code: routeCode.trim() || null,
-      internal_notes: internalNotes.trim() || null,
-      driver_daily_wage: parseOptionalNumber(driverWage),
-      transport_cost: parseOptionalNumber(transportCost),
-      other_cost: parseOptionalNumber(otherCost),
-    });
+    mutation.mutate();
   }
 
   const clients = clientsQuery.data ?? [];
   const drivers = driversQuery.data ?? [];
+  const routes = routesQuery.data ?? [];
+  const costTypes = costTypesQuery.data ?? [];
 
   if (campaignQuery.isLoading) {
     return (
@@ -239,13 +335,47 @@ export default function AdminEditCampaign() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Route Code</Label>
-                <Input
-                  value={routeCode}
-                  onChange={(e) => setRouteCode(e.target.value)}
-                  placeholder="e.g. A-7"
-                  className="h-10 rounded-xl bg-secondary/50 border-border"
-                />
+                <div className="flex items-center justify-between">
+                  <Label>Route</Label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowNewRoute(!showNewRoute);
+                      if (!showNewRoute) setRouteId("");
+                      else setNewRouteName("");
+                    }}
+                    className="text-xs text-primary hover:underline flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    {showNewRoute ? "Select Existing" : "Create New"}
+                  </button>
+                </div>
+                {showNewRoute ? (
+                  <Input
+                    value={newRouteName}
+                    onChange={(e) => setNewRouteName(e.target.value)}
+                    placeholder="New route name"
+                    className="h-10 rounded-xl bg-secondary/50 border-border"
+                  />
+                ) : (
+                  <Select value={routeId} onValueChange={setRouteId}>
+                    <SelectTrigger className="h-10 rounded-xl bg-secondary/50 border-border">
+                      <SelectValue placeholder="Select route (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {routes.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.name}{r.city ? ` (${r.city})` : ""}
+                        </SelectItem>
+                      ))}
+                      {routes.length === 0 && (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          No routes found
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
             <div className="space-y-2">
@@ -261,41 +391,32 @@ export default function AdminEditCampaign() {
           </div>
         </div>
 
+        {/* Cost section */}
         <div className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
           <h2 className="font-semibold text-foreground">
             Cost Breakdown <span className="text-xs text-muted-foreground font-normal">(internal)</span>
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Driver Daily Wage</Label>
-              <Input
-                type="number" step="0.01" min="0"
-                value={driverWage}
-                onChange={(e) => setDriverWage(e.target.value)}
-                placeholder="0.00"
-                className="h-10 rounded-xl bg-secondary/50 border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Transport Cost</Label>
-              <Input
-                type="number" step="0.01" min="0"
-                value={transportCost}
-                onChange={(e) => setTransportCost(e.target.value)}
-                placeholder="0.00"
-                className="h-10 rounded-xl bg-secondary/50 border-border"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Other Cost</Label>
-              <Input
-                type="number" step="0.01" min="0"
-                value={otherCost}
-                onChange={(e) => setOtherCost(e.target.value)}
-                placeholder="0.00"
-                className="h-10 rounded-xl bg-secondary/50 border-border"
-              />
-            </div>
+          <CampaignCostEditor
+            costs={costs}
+            onChange={setCosts}
+            costTypes={costTypes}
+          />
+        </div>
+
+        {/* Client billing */}
+        <div className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
+          <h2 className="font-semibold text-foreground">Client Billing</h2>
+          <div className="space-y-2">
+            <Label>Client Billed Amount</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={clientBilledAmount}
+              onChange={(e) => setClientBilledAmount(e.target.value)}
+              placeholder="0.00"
+              className="h-10 rounded-xl bg-secondary/50 border-border max-w-xs"
+            />
           </div>
         </div>
 

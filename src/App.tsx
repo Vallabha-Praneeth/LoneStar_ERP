@@ -26,6 +26,10 @@ const AdminPhotoManagement = lazy(() => import("./pages/admin/AdminPhotoManageme
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
 const AdminEditCampaign = lazy(() => import("./pages/admin/AdminEditCampaign"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminRouteList = lazy(() => import("./pages/admin/AdminRouteList"));
+const AdminRouteForm = lazy(() => import("./pages/admin/AdminRouteForm"));
+const AdminDriverDetail = lazy(() => import("./pages/admin/AdminDriverDetail"));
+const AdminCostTypes = lazy(() => import("./pages/admin/AdminCostTypes"));
 const AdminLayout = lazy(() =>
   import("./components/AdminLayout").then((m) => ({ default: m.AdminLayout }))
 );
@@ -129,6 +133,11 @@ const App = () => (
                   <Route path="campaigns/:id/photos" element={<AdminPhotoManagement />} />
                   <Route path="reports" element={<AdminReports />} />
                   <Route path="users" element={<AdminUsers />} />
+                  <Route path="routes" element={<AdminRouteList />} />
+                  <Route path="routes/create" element={<AdminRouteForm />} />
+                  <Route path="routes/:id/edit" element={<AdminRouteForm />} />
+                  <Route path="drivers/:id" element={<AdminDriverDetail />} />
+                  <Route path="settings/cost-types" element={<AdminCostTypes />} />
                 </Route>
 
                 {/* Client */}

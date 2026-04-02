@@ -1,3 +1,7 @@
+# Service account keys — NEVER commit
+*-sa-key.json
+*.serviceaccount.json
+
 # Environment files — NEVER commit
 .env
 .env.local

@@ -14,7 +14,7 @@ interface DriverCampaignData {
   id: string;
   title: string;
   campaign_date: string;
-  route_code: string | null;
+  routes: { name: string } | null;
   status: "draft" | "pending" | "active" | "completed";
   driver_shifts: { id: string; started_at: string; ended_at: string | null }[];
   campaign_photos: { id: string; submitted_at: string }[];
@@ -25,7 +25,8 @@ async function fetchDriverCampaign(driverId: string): Promise<DriverCampaignData
   const { data: activeCampaign, error: activeErr } = await supabase
     .from("campaigns")
     .select(`
-      id, title, campaign_date, route_code, status,
+      id, title, campaign_date, status,
+      routes:route_id ( name ),
       driver_shifts ( id, started_at, ended_at ),
       campaign_photos ( id, submitted_at )
     `)
@@ -41,7 +42,8 @@ async function fetchDriverCampaign(driverId: string): Promise<DriverCampaignData
   const { data, error } = await supabase
     .from("campaigns")
     .select(`
-      id, title, campaign_date, route_code, status,
+      id, title, campaign_date, status,
+      routes:route_id ( name ),
       driver_shifts ( id, started_at, ended_at ),
       campaign_photos ( id, submitted_at )
     `)
@@ -94,6 +96,7 @@ async function startShift(campaignId: string, driverId: string): Promise<void> {
     campaign_id: campaignId,
     driver_profile_id: driverId,
     started_at: new Date().toISOString(),
+    shift_status: "active",
   });
   if (error) throw error;
 }
@@ -101,7 +104,7 @@ async function startShift(campaignId: string, driverId: string): Promise<void> {
 async function endShift(shiftId: string): Promise<void> {
   const { error } = await supabase
     .from("driver_shifts")
-    .update({ ended_at: new Date().toISOString() })
+    .update({ ended_at: new Date().toISOString(), shift_status: "completed" })
     .eq("id", shiftId);
   if (error) throw error;
 }
@@ -220,7 +223,7 @@ export default function DriverCampaign() {
             <h2 className="text-lg font-semibold text-foreground">{campaign.title}</h2>
             <p className="text-sm text-muted-foreground">
               {format(new Date(campaign.campaign_date), "MMMM d, yyyy")}
-              {campaign.route_code && ` • Route ${campaign.route_code}`}
+              {campaign.routes?.name && ` \u2022 Route ${campaign.routes.name}`}
             </p>
           </div>
 

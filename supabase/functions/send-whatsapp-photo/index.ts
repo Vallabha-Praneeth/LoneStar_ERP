@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     // 1. Get campaign → client → phone_number
     const { data: campaign, error: campErr } = await supabase
       .from("campaigns")
-      .select("title, client_id, clients(name, phone_number)")
+      .select("title, client_id, drive_folder_url, clients(name, phone_number)")
       .eq("id", campaignId)
       .single();
 
@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
       type: "image",
       image: {
         link: photoUrl,
-        caption: `📸 ${campaign.title}${photo.note ? `\n${noteText}` : ""}`,
+        caption: `📸 ${campaign.title}${photo.note ? `\n${noteText}` : ""}${campaign.drive_folder_url ? `\n\nView all campaign photos: ${campaign.drive_folder_url}` : ""}`,
       },
     };
 

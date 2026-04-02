@@ -24,6 +24,8 @@ export function CreateDriverDialog({ open, onOpenChange, onCreated }: Props) {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
+  const [baseDailyWage, setBaseDailyWage] = useState("");
+  const [city, setCity] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -55,24 +57,43 @@ export function CreateDriverDialog({ open, onOpenChange, onCreated }: Props) {
       },
     });
 
-    setSaving(false);
-
     if (error) {
+      setSaving(false);
       toast.error(error.message || "Failed to create driver");
       return;
     }
 
     if (data?.error) {
+      setSaving(false);
       toast.error(data.error);
       return;
     }
 
     const user = data?.user;
+    const userId = user?.id;
+
+    // Create a drivers table row for this profile
+    if (userId) {
+      const wageNum = parseFloat(baseDailyWage);
+      const { error: driverErr } = await supabase.from("drivers").insert({
+        profile_id: userId,
+        base_daily_wage: !isNaN(wageNum) && wageNum >= 0 ? wageNum : null,
+        city: city.trim() || null,
+      });
+      if (driverErr) {
+        // Non-fatal: profile already created, just warn
+        console.warn("Failed to create drivers row:", driverErr.message);
+      }
+    }
+
+    setSaving(false);
     toast.success(`Driver "${user?.display_name ?? trimmedName}" created`);
     setUsername("");
     setDisplayName("");
     setPassword("");
-    onCreated({ id: user?.id, display_name: user?.display_name ?? trimmedName });
+    setBaseDailyWage("");
+    setCity("");
+    onCreated({ id: userId, display_name: user?.display_name ?? trimmedName });
     onOpenChange(false);
   }
 
@@ -117,6 +138,31 @@ export function CreateDriverDialog({ open, onOpenChange, onCreated }: Props) {
               placeholder="Minimum 6 characters"
               className="h-10 rounded-xl bg-secondary/50 border-border"
             />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="driver-wage">Base Daily Wage</Label>
+              <Input
+                id="driver-wage"
+                type="number"
+                step="0.01"
+                min="0"
+                value={baseDailyWage}
+                onChange={(e) => setBaseDailyWage(e.target.value)}
+                placeholder="0.00 (optional)"
+                className="h-10 rounded-xl bg-secondary/50 border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="driver-city">City</Label>
+              <Input
+                id="driver-city"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="e.g. Houston"
+                className="h-10 rounded-xl bg-secondary/50 border-border"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button

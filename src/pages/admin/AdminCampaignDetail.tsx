@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -21,26 +22,35 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, FileDown, Clock, User, Building2, StickyNote, Loader2, Image, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, FileDown, Clock, User, Building2, StickyNote, Loader2, Image, Pencil, Trash2, ExternalLink, FolderPlus, DollarSign, MapPin } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { generateCampaignPdf } from "@/lib/generateCampaignPdf";
 import { toast } from "sonner";
+import type { ShiftStatus } from "@/lib/types";
+
+interface CampaignCostItem {
+  id: string;
+  amount: number;
+  notes: string | null;
+  cost_types: { name: string } | null;
+}
 
 interface CampaignDetail {
   id: string;
   title: string;
   campaign_date: string;
   status: "draft" | "pending" | "active" | "completed";
-  route_code: string | null;
+  route_id: string | null;
+  routes: { name: string; city: string | null } | null;
   internal_notes: string | null;
-  driver_daily_wage: number | null;
-  transport_cost: number | null;
-  other_cost: number | null;
+  client_billed_amount: number | null;
   clients: { name: string } | null;
   driver_profile: { display_name: string } | null;
-  driver_shifts: { id: string; started_at: string; ended_at: string | null }[];
+  drive_folder_url: string | null;
+  campaign_costs: CampaignCostItem[];
+  driver_shifts: { id: string; started_at: string; ended_at: string | null; shift_status: ShiftStatus }[];
   campaign_photos: { id: string; submitted_at: string; note: string | null; storage_path: string }[];
 }
 
@@ -48,11 +58,13 @@ async function fetchCampaign(id: string): Promise<CampaignDetail | null> {
   const { data, error } = await supabase
     .from("campaigns")
     .select(`
-      id, title, campaign_date, status, route_code,
-      internal_notes, driver_daily_wage, transport_cost, other_cost,
+      id, title, campaign_date, status, route_id,
+      internal_notes, client_billed_amount, drive_folder_url,
+      routes:route_id ( name, city ),
       clients ( name ),
       driver_profile:profiles!driver_profile_id ( display_name ),
-      driver_shifts ( id, started_at, ended_at ),
+      campaign_costs ( id, amount, notes, cost_types ( name ) ),
+      driver_shifts ( id, started_at, ended_at, shift_status ),
       campaign_photos ( id, submitted_at, note, storage_path )
     `)
     .eq("id", id)
@@ -63,7 +75,7 @@ async function fetchCampaign(id: string): Promise<CampaignDetail | null> {
 }
 
 function formatTime(ts: string | null | undefined) {
-  if (!ts) return "—";
+  if (!ts) return "\u2014";
   return format(new Date(ts), "h:mm a");
 }
 
@@ -81,11 +93,24 @@ async function fetchPhotoUrls(photos: { id: string; storage_path: string }[]): P
   return Object.fromEntries(entries);
 }
 
+const shiftStatusColors: Record<ShiftStatus, string> = {
+  scheduled: "bg-blue-100 text-blue-800",
+  active: "bg-emerald-100 text-emerald-800",
+  completed: "bg-gray-100 text-gray-800",
+  no_show: "bg-red-100 text-red-800",
+  cancelled: "bg-amber-100 text-amber-800",
+};
+
+function shiftStatusLabel(s: ShiftStatus): string {
+  return s === "no_show" ? "No Show" : s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 export default function AdminCampaignDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const [deleting, setDeleting] = useState(false);
+  const [creatingFolder, setCreatingFolder] = useState(false);
 
   const { data: campaign, isLoading, error } = useQuery({
     queryKey: ["campaign", id],
@@ -119,9 +144,9 @@ export default function AdminCampaignDetail() {
 
   async function handleDelete() {
     setDeleting(true);
-    // Delete related records first, then the campaign
     await supabase.from("campaign_photos").delete().eq("campaign_id", id!);
     await supabase.from("driver_shifts").delete().eq("campaign_id", id!);
+    await supabase.from("campaign_costs").delete().eq("campaign_id", id!);
     const { error } = await supabase.from("campaigns").delete().eq("id", id!);
     setDeleting(false);
     if (error) {
@@ -149,12 +174,23 @@ export default function AdminCampaignDetail() {
     );
   }
 
-  const activeShift = campaign.driver_shifts.find((s) => !s.ended_at);
+  const activeShift = campaign.driver_shifts.find((s) => s.shift_status === "active");
   const latestShift = campaign.driver_shifts.sort(
     (a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
   )[0];
 
   const photoCount = campaign.campaign_photos.length;
+
+  // Cost calculations
+  const totalInternalCost = campaign.campaign_costs.reduce((sum, c) => sum + c.amount, 0);
+  const profitMargin =
+    campaign.client_billed_amount != null
+      ? campaign.client_billed_amount - totalInternalCost
+      : null;
+
+  const routeDisplay = campaign.routes
+    ? `${campaign.routes.name}${campaign.routes.city ? ` (${campaign.routes.city})` : ""}`
+    : null;
 
   return (
     <div className="space-y-6">
@@ -182,7 +218,7 @@ export default function AdminCampaignDetail() {
           </div>
           <p className="text-sm text-muted-foreground">
             {format(new Date(campaign.campaign_date), "MMMM d, yyyy")}
-            {campaign.route_code && ` • Route ${campaign.route_code}`}
+            {routeDisplay && ` \u2022 Route: ${routeDisplay}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -226,6 +262,42 @@ export default function AdminCampaignDetail() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          {campaign.drive_folder_url ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl hidden sm:flex"
+              asChild
+            >
+              <a href={campaign.drive_folder_url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
+                Google Drive
+              </a>
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-xl hidden sm:flex"
+              disabled={creatingFolder}
+              onClick={async () => {
+                setCreatingFolder(true);
+                const { error: fnErr } = await supabase.functions.invoke("create-drive-folder", {
+                  body: { campaignId: id },
+                });
+                setCreatingFolder(false);
+                if (fnErr) {
+                  toast.error("Failed to create Drive folder");
+                } else {
+                  toast.success("Drive folder created");
+                  queryClient.invalidateQueries({ queryKey: ["campaign", id] });
+                }
+              }}
+            >
+              {creatingFolder ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <FolderPlus className="w-3.5 h-3.5 mr-1.5" />}
+              Create Drive Folder
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -241,10 +313,10 @@ export default function AdminCampaignDetail() {
       {/* Info cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { icon: Building2, label: "Client", value: campaign.clients?.name ?? "—" },
+          { icon: Building2, label: "Client", value: campaign.clients?.name ?? "\u2014" },
           { icon: User, label: "Driver", value: campaign.driver_profile?.display_name ?? "Unassigned" },
-          { icon: Clock, label: "Login Time", value: latestShift ? formatTime(latestShift.started_at) : "—" },
-          { icon: Clock, label: "Logout Time", value: latestShift?.ended_at ? formatTime(latestShift.ended_at) : activeShift ? "Active" : "—" },
+          { icon: Clock, label: "Login Time", value: latestShift ? formatTime(latestShift.started_at) : "\u2014" },
+          { icon: Clock, label: "Logout Time", value: latestShift?.ended_at ? formatTime(latestShift.ended_at) : activeShift ? "Active" : "\u2014" },
         ].map((item, i) => (
           <motion.div
             key={item.label}
@@ -274,30 +346,84 @@ export default function AdminCampaignDetail() {
       )}
 
       {/* Cost section */}
-      {(campaign.driver_daily_wage || campaign.transport_cost || campaign.other_cost) && (
+      {(campaign.campaign_costs.length > 0 || campaign.client_billed_amount != null) && (
         <div className="bg-card rounded-xl border border-border shadow-card p-5">
-          <h3 className="font-medium text-foreground mb-3">
-            Cost Breakdown <span className="text-xs text-muted-foreground font-normal">(internal)</span>
-          </h3>
-          <div className="grid grid-cols-3 gap-4 text-sm">
-            <div>
-              <p className="text-muted-foreground">Driver Wage</p>
-              <p className="font-semibold text-foreground">
-                {campaign.driver_daily_wage ? `$${campaign.driver_daily_wage.toFixed(2)}` : "—"}
-              </p>
+          <div className="flex items-center gap-2 mb-3">
+            <DollarSign className="w-4 h-4 text-muted-foreground" />
+            <h3 className="font-medium text-foreground">
+              Financial Summary <span className="text-xs text-muted-foreground font-normal">(internal)</span>
+            </h3>
+          </div>
+
+          {campaign.campaign_costs.length > 0 && (
+            <div className="mb-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 text-muted-foreground font-medium">Cost Item</th>
+                    <th className="text-right py-2 text-muted-foreground font-medium">Amount</th>
+                    <th className="text-left py-2 pl-4 text-muted-foreground font-medium hidden sm:table-cell">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {campaign.campaign_costs.map((cost) => (
+                    <tr key={cost.id} className="border-b border-border/50">
+                      <td className="py-2 text-foreground">{cost.cost_types?.name ?? "Unknown"}</td>
+                      <td className="py-2 text-right font-medium text-foreground">${cost.amount.toFixed(2)}</td>
+                      <td className="py-2 pl-4 text-muted-foreground hidden sm:table-cell">{cost.notes ?? "\u2014"}</td>
+                    </tr>
+                  ))}
+                  <tr className="bg-muted/30">
+                    <td className="py-2 font-semibold text-foreground">Total Internal Cost</td>
+                    <td className="py-2 text-right font-semibold text-foreground">${totalInternalCost.toFixed(2)}</td>
+                    <td className="hidden sm:table-cell" />
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div>
-              <p className="text-muted-foreground">Transport</p>
-              <p className="font-semibold text-foreground">
-                {campaign.transport_cost ? `$${campaign.transport_cost.toFixed(2)}` : "—"}
-              </p>
+          )}
+
+          {campaign.client_billed_amount != null && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-border">
+              <div>
+                <p className="text-xs text-muted-foreground">Client Billed</p>
+                <p className="font-semibold text-foreground">${campaign.client_billed_amount.toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Internal Cost</p>
+                <p className="font-semibold text-foreground">${totalInternalCost.toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Profit Margin</p>
+                <p className={`font-semibold ${profitMargin != null && profitMargin >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+                  {profitMargin != null ? `$${profitMargin.toFixed(2)}` : "\u2014"}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-muted-foreground">Other</p>
-              <p className="font-semibold text-foreground">
-                {campaign.other_cost ? `$${campaign.other_cost.toFixed(2)}` : "—"}
-              </p>
-            </div>
+          )}
+        </div>
+      )}
+
+      {/* Driver shifts with status badges */}
+      {campaign.driver_shifts.length > 0 && (
+        <div className="bg-card rounded-xl border border-border shadow-card p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock className="w-4 h-4 text-muted-foreground" />
+            <h3 className="font-medium text-foreground">Driver Shifts</h3>
+          </div>
+          <div className="space-y-2">
+            {campaign.driver_shifts
+              .sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())
+              .map((shift) => (
+                <div key={shift.id} className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+                  <div className="text-sm text-foreground">
+                    {formatTime(shift.started_at)} {"\u2014"} {shift.ended_at ? formatTime(shift.ended_at) : "Ongoing"}
+                  </div>
+                  <Badge variant="secondary" className={`text-xs ${shiftStatusColors[shift.shift_status]}`}>
+                    {shiftStatusLabel(shift.shift_status)}
+                  </Badge>
+                </div>
+              ))}
           </div>
         </div>
       )}
@@ -312,7 +438,7 @@ export default function AdminCampaignDetail() {
             </p>
           </div>
           <Link to={`/admin/campaigns/${id}/photos`} className="text-sm text-primary hover:underline">
-            View All →
+            View All {"\u2192"}
           </Link>
         </div>
 

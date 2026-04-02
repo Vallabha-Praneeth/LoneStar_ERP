@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Calendar, Clock, LogOut, Loader2, Image, FileDown, X, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { Calendar, Clock, LogOut, Loader2, Image, FileDown, X, ChevronLeft, ChevronRight, ChevronDown, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +15,7 @@ interface ClientCampaignData {
   title: string;
   campaign_date: string;
   status: "draft" | "pending" | "active" | "completed";
+  drive_folder_url: string | null;
   campaign_photos: { id: string; storage_path: string; submitted_at: string }[];
 }
 
@@ -39,7 +40,7 @@ async function fetchClientCampaign(clientId: string, campaignId?: string): Promi
   let query = supabase
     .from("campaigns")
     .select(`
-      id, title, campaign_date, status,
+      id, title, campaign_date, status, drive_folder_url,
       campaign_photos ( id, storage_path, submitted_at )
     `)
     .eq("client_id", clientId)
@@ -226,13 +227,26 @@ export default function ClientCampaignView() {
                 </div>
               )}
 
-              <Link
-                to="/client/campaign/timing"
-                className="inline-flex items-center gap-2 text-sm text-primary hover:underline sm:hidden"
-              >
-                <Clock className="w-4 h-4" />
-                View Timing Sheet
-              </Link>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  to="/client/campaign/timing"
+                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline sm:hidden"
+                >
+                  <Clock className="w-4 h-4" />
+                  View Timing Sheet
+                </Link>
+                {campaign.drive_folder_url && (
+                  <a
+                    href={campaign.drive_folder_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    View in Google Drive
+                  </a>
+                )}
+              </div>
             </motion.div>
 
             {/* Photo gallery */}

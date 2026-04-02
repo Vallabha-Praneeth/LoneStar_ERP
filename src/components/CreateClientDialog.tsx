@@ -22,6 +22,7 @@ interface Props {
 
 export function CreateClientDialog({ open, onOpenChange, onCreated }: Props) {
   const [name, setName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -32,10 +33,12 @@ export function CreateClientDialog({ open, onOpenChange, onCreated }: Props) {
       return;
     }
 
+    const trimmedPhone = phoneNumber.trim() || null;
+
     setSaving(true);
     const { data, error } = await supabase
       .from("clients")
-      .insert({ name: trimmed, is_active: true })
+      .insert({ name: trimmed, is_active: true, phone_number: trimmedPhone })
       .select("id, name")
       .single();
 
@@ -48,6 +51,7 @@ export function CreateClientDialog({ open, onOpenChange, onCreated }: Props) {
 
     toast.success(`Client "${data.name}" created`);
     setName("");
+    setPhoneNumber("");
     onCreated(data);
     onOpenChange(false);
   }
@@ -72,6 +76,20 @@ export function CreateClientDialog({ open, onOpenChange, onCreated }: Props) {
               className="h-10 rounded-xl bg-secondary/50 border-border"
               autoFocus
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="client-phone">WhatsApp Number</Label>
+            <Input
+              id="client-phone"
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="e.g. +919494348091"
+              className="h-10 rounded-xl bg-secondary/50 border-border"
+            />
+            <p className="text-xs text-muted-foreground">
+              E.164 format. Used for WhatsApp photo notifications.
+            </p>
           </div>
           <DialogFooter>
             <Button

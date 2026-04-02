@@ -148,6 +148,17 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ── Create drivers row for driver users ──────────────────
+    if (role === "driver") {
+      const { error: driverError } = await adminClient
+        .from("drivers")
+        .insert({ profile_id: userId });
+
+      if (driverError) {
+        console.error("Drivers row insert failed (non-fatal):", driverError.message);
+      }
+    }
+
     return new Response(
       JSON.stringify({ user: profile }),
       { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } },
