@@ -24,6 +24,7 @@ const AdminCreateCampaign = lazy(() => import("./pages/admin/AdminCreateCampaign
 const AdminCampaignDetail = lazy(() => import("./pages/admin/AdminCampaignDetail"));
 const AdminPhotoManagement = lazy(() => import("./pages/admin/AdminPhotoManagement"));
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
+const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const AdminEditCampaign = lazy(() => import("./pages/admin/AdminEditCampaign"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminRouteList = lazy(() => import("./pages/admin/AdminRouteList"));
@@ -132,6 +133,7 @@ const App = () => (
                   <Route path="campaigns/:id/edit" element={<AdminEditCampaign />} />
                   <Route path="campaigns/:id/photos" element={<AdminPhotoManagement />} />
                   <Route path="reports" element={<AdminReports />} />
+                  <Route path="analytics" element={<AdminAnalytics />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="routes" element={<AdminRouteList />} />
                   <Route path="routes/create" element={<AdminRouteForm />} />
