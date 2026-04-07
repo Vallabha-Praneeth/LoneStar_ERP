@@ -5,7 +5,6 @@ import { StatusBadge } from "@/components/StatusBadge";
 import {
   Plus,
   Search,
-  Loader2,
   Filter,
   ArrowRight,
   Camera,
@@ -24,8 +23,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
+
+const fadeIn = motionTokens.variants.fadeIn;
+const fadeUp = motionTokens.variants.fadeUp;
+const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
 
 interface CampaignRow {
   id: string;
@@ -141,9 +146,18 @@ export default function AdminCampaignList() {
 
       {/* States */}
       {isLoading && (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+          className="grid gap-3"
+          aria-busy
+          aria-label="Loading campaigns"
+        >
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-28 w-full rounded-xl" />
+          ))}
+        </motion.div>
       )}
 
       {error && (
@@ -169,18 +183,18 @@ export default function AdminCampaignList() {
       )}
 
       {/* Campaign cards */}
-      <div className="grid gap-3">
-        {filtered.map((c, i) => {
+      <motion.div
+        className="grid gap-3"
+        initial="hidden"
+        animate="visible"
+        variants={listStaggerParent}
+      >
+        {filtered.map((c) => {
           const cost = totalCost(c);
           const photoCount = c.campaign_photos?.length ?? 0;
 
           return (
-            <motion.div
-              key={c.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04, ease: "easeOut" }}
-            >
+            <motion.div key={c.id} variants={fadeUp}>
               <Link
                 to={`/admin/campaigns/${c.id}`}
                 className="group flex items-stretch bg-card rounded-xl border border-border shadow-sm hover:shadow-md hover:-translate-y-[1px] transition-all duration-200 overflow-hidden"
@@ -252,7 +266,7 @@ export default function AdminCampaignList() {
             </motion.div>
           );
         })}
-      </div>
+      </motion.div>
     </div>
   );
 }

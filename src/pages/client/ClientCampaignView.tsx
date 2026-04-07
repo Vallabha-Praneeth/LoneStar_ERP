@@ -8,6 +8,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
+import { fadeIn, fadeUp, gridStaggerParent } from "@/lib/motion/pageMotion";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { generateClientPdf } from "@/lib/generateClientPdf";
 
 interface ClientCampaignData {
@@ -109,8 +112,23 @@ export default function ClientCampaignView() {
 
   if (campaignQuery.isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+          className="w-full max-w-md space-y-4"
+          aria-busy
+          aria-label="Loading campaign"
+        >
+          <Skeleton className="h-10 w-full rounded-xl" />
+          <Skeleton className="h-36 w-full rounded-2xl" />
+          <div className="grid grid-cols-3 gap-2">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="aspect-[4/3] rounded-xl" />
+            ))}
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -175,8 +193,9 @@ export default function ClientCampaignView() {
           <>
             {/* Campaign info */}
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial="hidden"
+              animate="visible"
+              variants={fadeUp}
               className="bg-card rounded-2xl border border-border shadow-card p-6"
             >
               <div className="flex items-start justify-between mb-4">
@@ -264,13 +283,16 @@ export default function ClientCampaignView() {
                   <p className="text-sm text-muted-foreground">No photos yet</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <motion.div
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                  initial="hidden"
+                  animate="visible"
+                  variants={gridStaggerParent}
+                >
                   {photos.map((photo, i) => (
                     <motion.div
                       key={photo.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
+                      variants={fadeUp}
                       className="bg-card rounded-xl border border-border overflow-hidden shadow-card cursor-pointer hover:shadow-md transition-shadow"
                       onClick={() => signedUrls[photo.id] && setLightboxIndex(i)}
                     >
@@ -294,7 +316,7 @@ export default function ClientCampaignView() {
                       </div>
                     </motion.div>
                   ))}
-                </div>
+                </motion.div>
               )}
             </div>
             {/* Mobile PDF button */}
@@ -325,6 +347,7 @@ export default function ClientCampaignView() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: motionTokens.duration.fast }}
             className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
             onClick={() => setLightboxIndex(null)}
           >
@@ -356,11 +379,18 @@ export default function ClientCampaignView() {
                 <ChevronRight className="w-8 h-8" />
               </button>
             )}
-            <img
+            <motion.img
+              key={photos[lightboxIndex].id}
               src={signedUrls[photos[lightboxIndex].id]}
               alt={`Photo ${lightboxIndex + 1}`}
               className="max-w-[90vw] max-h-[90vh] object-contain"
               onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                duration: motionTokens.duration.base,
+                ease: motionTokens.easing.smooth,
+              }}
             />
             <div className="absolute bottom-4 text-white/60 text-sm">
               {lightboxIndex + 1} / {photos.length}

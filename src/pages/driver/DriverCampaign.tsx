@@ -3,12 +3,14 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Camera, LogIn, LogOut, Clock, ChevronDown, Loader2, History } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { fadeUp, scaleIn, listStaggerParent, sectionStaggerParent } from "@/lib/motion/pageMotion";
 
 interface DriverCampaignData {
   id: string;
@@ -164,9 +166,23 @@ export default function DriverCampaign() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        className="min-h-screen bg-background"
+        aria-busy
+        aria-label="Loading campaign"
+      >
+        <div className="bg-card border-b border-border px-4 py-3">
+          <Skeleton className="h-6 w-40" />
+        </div>
+        <div className="p-4 space-y-4">
+          <Skeleton className="h-32 w-full rounded-xl" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+        </div>
+      </motion.div>
     );
   }
 
@@ -212,11 +228,15 @@ export default function DriverCampaign() {
         </div>
       </div>
 
-      <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] max-w-md mx-auto space-y-4">
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={sectionStaggerParent}
+        className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] max-w-md mx-auto space-y-4"
+      >
         {/* Campaign Card */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+          variants={fadeUp}
           className="bg-card rounded-2xl border border-border shadow-card p-5 space-y-4"
         >
           <div>
@@ -234,54 +254,65 @@ export default function DriverCampaign() {
             </div>
           )}
 
-          <div className="space-y-3">
+          <motion.div
+            className="space-y-3"
+            initial="hidden"
+            animate="visible"
+            variants={listStaggerParent}
+          >
             {!activeShift ? (
-              <Button
-                onClick={() => startMutation.mutate()}
-                disabled={startMutation.isPending}
-                className="w-full h-14 rounded-xl bg-success text-success-foreground hover:bg-success/90 text-base font-medium"
-              >
-                {startMutation.isPending ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    <LogIn className="w-5 h-5 mr-2" />
-                    Start Shift
-                  </>
-                )}
-              </Button>
-            ) : (
-              <>
+              <motion.div variants={scaleIn} className="w-full">
                 <Button
-                  onClick={() => navigate("/driver/upload")}
-                  className="w-full h-14 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-base font-medium"
+                  onClick={() => startMutation.mutate()}
+                  disabled={startMutation.isPending}
+                  className="w-full h-14 rounded-xl bg-success text-success-foreground hover:bg-success/90 text-base font-medium"
                 >
-                  <Camera className="w-5 h-5 mr-2" />
-                  Upload Photo
-                </Button>
-                <Button
-                  onClick={() => endMutation.mutate()}
-                  disabled={endMutation.isPending}
-                  variant="outline"
-                  className="w-full h-14 rounded-xl text-base font-medium border-destructive/30 text-destructive hover:bg-destructive/5"
-                >
-                  {endMutation.isPending ? (
+                  {startMutation.isPending ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
-                      <LogOut className="w-5 h-5 mr-2" />
-                      End Shift
+                      <LogIn className="w-5 h-5 mr-2" />
+                      Start Shift
                     </>
                   )}
                 </Button>
+              </motion.div>
+            ) : (
+              <>
+                <motion.div variants={scaleIn} className="w-full">
+                  <Button
+                    onClick={() => navigate("/driver/upload")}
+                    className="w-full h-14 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-base font-medium"
+                  >
+                    <Camera className="w-5 h-5 mr-2" />
+                    Upload Photo
+                  </Button>
+                </motion.div>
+                <motion.div variants={scaleIn} className="w-full">
+                  <Button
+                    onClick={() => endMutation.mutate()}
+                    disabled={endMutation.isPending}
+                    variant="outline"
+                    className="w-full h-14 rounded-xl text-base font-medium border-destructive/30 text-destructive hover:bg-destructive/5"
+                  >
+                    {endMutation.isPending ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        <LogOut className="w-5 h-5 mr-2" />
+                        End Shift
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
               </>
             )}
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Recent uploads */}
         {recentPhotos.length > 0 && (
-          <div className="bg-card rounded-2xl border border-border shadow-card p-5">
+          <motion.div variants={fadeUp} className="bg-card rounded-2xl border border-border shadow-card p-5">
             <h3 className="font-medium text-foreground mb-3">Recent Uploads</h3>
             <div className="space-y-2">
               {recentPhotos.map((photo) => (
@@ -299,12 +330,12 @@ export default function DriverCampaign() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Past campaigns */}
         {(historyQuery.data?.length ?? 0) > 0 && (
-          <div className="bg-card rounded-2xl border border-border shadow-card">
+          <motion.div variants={fadeUp} className="bg-card rounded-2xl border border-border shadow-card">
             <button
               onClick={() => setShowHistory(!showHistory)}
               className="w-full flex items-center justify-between p-5"
@@ -334,9 +365,9 @@ export default function DriverCampaign() {
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

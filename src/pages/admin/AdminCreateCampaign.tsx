@@ -17,9 +17,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { CreateClientDialog } from "@/components/CreateClientDialog";
 import { CreateDriverDialog } from "@/components/CreateDriverDialog";
 import { CampaignCostEditor, CostRow } from "@/components/CampaignCostEditor";
+
+const fadeUp = motionTokens.variants.fadeUp;
 
 interface ClientOption {
   id: string;
@@ -61,7 +64,7 @@ async function fetchDrivers(): Promise<DriverOption[]> {
     .eq("is_active", true)
     .order("display_name");
   if (error) throw error;
-  return (data ?? []).map((d: any) => ({
+  return (data ?? []).map((d: { id: string; display_name: string; drivers: { base_daily_wage: number | null }[] | { base_daily_wage: number | null } | null }) => ({
     id: d.id,
     display_name: d.display_name,
     base_daily_wage: d.drivers?.[0]?.base_daily_wage ?? d.drivers?.base_daily_wage ?? null,
@@ -257,8 +260,9 @@ export default function AdminCreateCampaign() {
       </div>
 
       <motion.form
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
         className="space-y-6"
         onSubmit={handleSubmit}
       >
