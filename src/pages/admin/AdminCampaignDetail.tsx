@@ -26,9 +26,16 @@ import { ArrowLeft, FileDown, Clock, User, Building2, StickyNote, Loader2, Image
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { generateCampaignPdf } from "@/lib/generateCampaignPdf";
 import { toast } from "sonner";
 import type { ShiftStatus } from "@/lib/types";
+
+const fadeIn = motionTokens.variants.fadeIn;
+const fadeUp = motionTokens.variants.fadeUp;
+const gridStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.grid } } } as const;
+const sectionStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.section } } } as const;
 
 interface CampaignCostItem {
   id: string;
@@ -160,9 +167,29 @@ export default function AdminCampaignDetail() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        className="space-y-6 max-w-5xl"
+        aria-busy
+        aria-label="Loading campaign"
+      >
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-lg" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-8 w-64 rounded-lg" />
+            <Skeleton className="h-4 w-48 rounded-lg" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24 rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-40 rounded-xl" />
+        <Skeleton className="h-56 rounded-xl" />
+      </motion.div>
     );
   }
 
@@ -193,8 +220,13 @@ export default function AdminCampaignDetail() {
     : null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={sectionStaggerParent}
+      className="space-y-6"
+    >
+      <motion.div variants={fadeUp} className="flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -308,21 +340,24 @@ export default function AdminCampaignDetail() {
             Export PDF
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Info cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <motion.div
+        variants={gridStaggerParent}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
+      >
         {[
           { icon: Building2, label: "Client", value: campaign.clients?.name ?? "\u2014" },
           { icon: User, label: "Driver", value: campaign.driver_profile?.display_name ?? "Unassigned" },
           { icon: Clock, label: "Login Time", value: latestShift ? formatTime(latestShift.started_at) : "\u2014" },
           { icon: Clock, label: "Logout Time", value: latestShift?.ended_at ? formatTime(latestShift.ended_at) : activeShift ? "Active" : "\u2014" },
-        ].map((item, i) => (
+        ].map((item) => (
           <motion.div
             key={item.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
+            variants={fadeUp}
             className="bg-card rounded-xl border border-border shadow-card p-4"
           >
             <div className="flex items-center gap-2 mb-1">
@@ -332,22 +367,22 @@ export default function AdminCampaignDetail() {
             <p className="font-semibold text-foreground">{item.value}</p>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Internal notes */}
       {campaign.internal_notes && (
-        <div className="bg-card rounded-xl border border-border shadow-card p-5">
+        <motion.div variants={fadeUp} className="bg-card rounded-xl border border-border shadow-card p-5">
           <div className="flex items-center gap-2 mb-2">
             <StickyNote className="w-4 h-4 text-muted-foreground" />
             <h3 className="font-medium text-foreground">Internal Notes</h3>
           </div>
           <p className="text-sm text-muted-foreground">{campaign.internal_notes}</p>
-        </div>
+        </motion.div>
       )}
 
       {/* Cost section */}
       {(campaign.campaign_costs.length > 0 || campaign.client_billed_amount != null) && (
-        <div className="bg-card rounded-xl border border-border shadow-card p-5">
+        <motion.div variants={fadeUp} className="bg-card rounded-xl border border-border shadow-card p-5">
           <div className="flex items-center gap-2 mb-3">
             <DollarSign className="w-4 h-4 text-muted-foreground" />
             <h3 className="font-medium text-foreground">
@@ -401,12 +436,12 @@ export default function AdminCampaignDetail() {
               </div>
             </div>
           )}
-        </div>
+        </motion.div>
       )}
 
       {/* Driver shifts with status badges */}
       {campaign.driver_shifts.length > 0 && (
-        <div className="bg-card rounded-xl border border-border shadow-card p-5">
+        <motion.div variants={fadeUp} className="bg-card rounded-xl border border-border shadow-card p-5">
           <div className="flex items-center gap-2 mb-3">
             <Clock className="w-4 h-4 text-muted-foreground" />
             <h3 className="font-medium text-foreground">Driver Shifts</h3>
@@ -425,11 +460,11 @@ export default function AdminCampaignDetail() {
                 </div>
               ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Photos */}
-      <div>
+      <motion.div variants={fadeUp}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-semibold text-foreground text-lg">Campaign Photos</h3>
@@ -448,12 +483,17 @@ export default function AdminCampaignDetail() {
             <p className="text-sm text-muted-foreground">No photos uploaded yet</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            initial="hidden"
+            animate="visible"
+            variants={gridStaggerParent}
+          >
             {campaign.campaign_photos.slice(0, 6).map((photo) => (
+              <motion.div key={photo.id} variants={fadeUp}>
               <Link
-                key={photo.id}
                 to={`/admin/campaigns/${id}/photos`}
-                className="bg-card rounded-xl border border-border shadow-card overflow-hidden hover:shadow-md transition-shadow"
+                className="bg-card rounded-xl border border-border shadow-card overflow-hidden hover:shadow-md transition-shadow block h-full"
               >
                 {signedUrls[photo.id] ? (
                   <div className="aspect-[4/3]">
@@ -479,13 +519,14 @@ export default function AdminCampaignDetail() {
                   </div>
                 )}
               </Link>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
       {/* Mobile PDF button */}
-      <div className="sm:hidden">
+      <motion.div variants={fadeUp} className="sm:hidden">
         <Button
           className="w-full h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
           onClick={() => generateCampaignPdf(campaign)}
@@ -493,7 +534,7 @@ export default function AdminCampaignDetail() {
           <FileDown className="w-4 h-4 mr-2" />
           Export PDF Report
         </Button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

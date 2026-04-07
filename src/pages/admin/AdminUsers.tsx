@@ -24,11 +24,17 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { CreateDriverDialog } from "@/components/CreateDriverDialog";
 import { CreateClientUserDialog } from "@/components/CreateClientUserDialog";
+
+const fadeIn = motionTokens.variants.fadeIn;
+const fadeUp = motionTokens.variants.fadeUp;
+const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
 
 interface UserRow {
   id: string;
@@ -257,9 +263,18 @@ export default function AdminUsers() {
 
       {/* States */}
       {isLoading && (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+          className="grid gap-2.5"
+          aria-busy
+          aria-label="Loading users"
+        >
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-xl" />
+          ))}
+        </motion.div>
       )}
 
       {error && (
@@ -275,17 +290,20 @@ export default function AdminUsers() {
       )}
 
       {/* User cards */}
-      <div className="grid gap-2.5">
-        {filtered.map((u, i) => {
+      <motion.div
+        className="grid gap-2.5"
+        initial="hidden"
+        animate="visible"
+        variants={listStaggerParent}
+      >
+        {filtered.map((u) => {
           const rc = roleConfig[u.role] ?? roleConfig.client;
           const RoleIcon = rc.icon;
 
           return (
             <motion.div
               key={u.id}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.03, ease: "easeOut" }}
+              variants={fadeUp}
               className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border shadow-sm"
             >
               {/* Avatar with role color */}
@@ -392,7 +410,7 @@ export default function AdminUsers() {
             </motion.div>
           );
         })}
-      </div>
+      </motion.div>
 
       {/* Create Driver Dialog */}
       <CreateDriverDialog

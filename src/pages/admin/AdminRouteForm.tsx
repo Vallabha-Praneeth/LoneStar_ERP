@@ -9,8 +9,13 @@ import {
   ArrowLeft, Save, Loader2, Plus, Trash2, ChevronUp, ChevronDown,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+
+const fadeIn = motionTokens.variants.fadeIn;
+const fadeUp = motionTokens.variants.fadeUp;
 
 interface StopRow {
   venue_name: string;
@@ -179,9 +184,18 @@ export default function AdminRouteForm() {
 
   if (isEdit && routeQuery.isLoading) {
     return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        className="max-w-2xl space-y-4 py-4"
+        aria-busy
+        aria-label="Loading route"
+      >
+        <Skeleton className="h-10 w-3/4 rounded-xl" />
+        <Skeleton className="h-48 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-xl" />
+      </motion.div>
     );
   }
 
@@ -205,8 +219,9 @@ export default function AdminRouteForm() {
       </div>
 
       <motion.form
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
         className="space-y-6"
         onSubmit={handleSubmit}
       >

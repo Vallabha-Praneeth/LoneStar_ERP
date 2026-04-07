@@ -5,8 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+
+const fadeIn = motionTokens.variants.fadeIn;
+const fadeUp = motionTokens.variants.fadeUp;
+const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
 
 interface CostTypeRow {
   id: string;
@@ -86,7 +92,13 @@ export default function AdminCostTypes() {
       </div>
 
       {/* Add form */}
-      <form onSubmit={handleCreate} className="flex gap-3">
+      <motion.form
+        onSubmit={handleCreate}
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        className="flex gap-3"
+      >
         <Input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
@@ -105,13 +117,22 @@ export default function AdminCostTypes() {
           )}
           Add
         </Button>
-      </form>
+      </motion.form>
 
       {/* States */}
       {isLoading && (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+          className="space-y-2 py-4"
+          aria-busy
+          aria-label="Loading cost types"
+        >
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-xl" />
+          ))}
+        </motion.div>
       )}
 
       {error && (
@@ -127,13 +148,16 @@ export default function AdminCostTypes() {
       )}
 
       {/* List */}
-      <div className="bg-card rounded-xl border border-border shadow-card divide-y divide-border">
-        {costTypes.map((ct, i) => (
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={listStaggerParent}
+        className="bg-card rounded-xl border border-border shadow-card divide-y divide-border"
+      >
+        {costTypes.map((ct) => (
           <motion.div
             key={ct.id}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.03 }}
+            variants={fadeUp}
             className="flex items-center justify-between px-5 py-3.5"
           >
             <div className="flex items-center gap-3 min-w-0">
@@ -159,7 +183,7 @@ export default function AdminCostTypes() {
             />
           </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -8,6 +8,12 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
+
+const fadeIn = motionTokens.variants.fadeIn;
+const fadeUp = motionTokens.variants.fadeUp;
+const sectionStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.section } } } as const;
 
 interface DriverData {
   id: string;
@@ -119,9 +125,17 @@ export default function AdminDriverDetail() {
 
   if (driverQuery.isLoading) {
     return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        className="max-w-2xl space-y-4 py-4"
+        aria-busy
+        aria-label="Loading driver"
+      >
+        <Skeleton className="h-10 w-2/3 rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
+      </motion.div>
     );
   }
 
@@ -148,19 +162,25 @@ export default function AdminDriverDetail() {
       </div>
 
       {!driver && (
-        <div className="text-sm text-amber-700 bg-amber-50 rounded-xl p-4">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          className="text-sm text-amber-700 bg-amber-50 rounded-xl p-4"
+        >
           No driver record found for this profile. Fill in the details below and save to create one.
-        </div>
+        </motion.div>
       )}
 
       <motion.form
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial="hidden"
+        animate="visible"
+        variants={sectionStaggerParent}
         className="space-y-6"
         onSubmit={handleSubmit}
       >
         {/* License */}
-        <div className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
+        <motion.div variants={fadeUp} className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
           <h2 className="font-semibold text-foreground">License Information</h2>
           <div className="grid gap-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -193,10 +213,10 @@ export default function AdminDriverDetail() {
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Emergency contact */}
-        <div className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
+        <motion.div variants={fadeUp} className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
           <h2 className="font-semibold text-foreground">Emergency Contact</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -218,10 +238,10 @@ export default function AdminDriverDetail() {
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Compensation & location */}
-        <div className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
+        <motion.div variants={fadeUp} className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
           <h2 className="font-semibold text-foreground">Compensation & Location</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -246,10 +266,10 @@ export default function AdminDriverDetail() {
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Actions */}
-        <div className="flex gap-3 justify-end">
+        <motion.div variants={fadeUp} className="flex gap-3 justify-end">
           <Button
             type="button"
             variant="outline"
@@ -270,7 +290,7 @@ export default function AdminDriverDetail() {
             )}
             Save Details
           </Button>
-        </div>
+        </motion.div>
       </motion.form>
     </div>
   );

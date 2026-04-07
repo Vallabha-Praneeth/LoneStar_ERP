@@ -1,10 +1,16 @@
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Clock, CheckCircle2, Loader2, LogOut } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle2, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
+
+const fadeIn = motionTokens.variants.fadeIn;
+const fadeUp = motionTokens.variants.fadeUp;
+const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
 
 interface ShiftData {
   id: string;
@@ -79,8 +85,18 @@ export default function ClientTimingSheet() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+          className="w-full max-w-sm space-y-3"
+          aria-busy
+          aria-label="Loading timing"
+        >
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-10 w-full rounded-lg" />
+        </motion.div>
       </div>
     );
   }
@@ -146,8 +162,9 @@ export default function ClientTimingSheet() {
           </div>
         ) : (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial="hidden"
+            animate="visible"
+            variants={fadeUp}
             className="bg-card rounded-2xl border border-border shadow-card p-6"
           >
             <h2 className="font-semibold text-foreground mb-1">{data.campaign.title}</h2>
@@ -155,9 +172,14 @@ export default function ClientTimingSheet() {
               {format(new Date(data.campaign.campaign_date), "MMMM d, yyyy")}
             </p>
 
-            <div className="space-y-0">
+            <motion.div
+              className="space-y-0"
+              initial="hidden"
+              animate="visible"
+              variants={listStaggerParent}
+            >
               {timingRows.map((item, i) => (
-                <div key={i} className="flex items-center gap-4 relative">
+                <motion.div key={item.label} variants={fadeUp} className="flex items-center gap-4 relative">
                   {i < timingRows.length - 1 && (
                     <div className="absolute left-[15px] top-8 w-0.5 h-8 bg-border" />
                   )}
@@ -176,9 +198,9 @@ export default function ClientTimingSheet() {
                     <p className="text-sm font-medium text-foreground">{item.label}</p>
                     <p className="text-xs text-muted-foreground">{item.time}</p>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
 
             {shiftDuration && (
               <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">

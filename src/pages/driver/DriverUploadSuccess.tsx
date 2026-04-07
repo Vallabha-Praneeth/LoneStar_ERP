@@ -1,19 +1,33 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { CheckCircle2, ArrowLeft } from "lucide-react";
+
+const scaleIn = motionTokens.variants.scaleIn;
 
 export default function DriverUploadSuccess() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial="hidden"
+        animate="visible"
+        variants={scaleIn}
         className="w-full max-w-sm bg-card rounded-2xl border border-border shadow-card p-8 text-center space-y-5"
       >
-        <div className="w-16 h-16 bg-success/10 rounded-2xl flex items-center justify-center mx-auto">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{
+            type: "spring",
+            stiffness: 420,
+            damping: 22,
+            delay: 0.05,
+          }}
+          className="w-16 h-16 bg-success/10 rounded-2xl flex items-center justify-center mx-auto"
+        >
           <CheckCircle2 className="w-8 h-8 text-success" />
-        </div>
+        </motion.div>
 
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-foreground">Photo Uploaded</h2>

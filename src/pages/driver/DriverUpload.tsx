@@ -8,6 +8,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { fadeUp } from "@/lib/motion/pageMotion";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { compressImage } from "@/lib/compressImage";
 
 interface ActiveCampaign {
@@ -172,8 +174,9 @@ export default function DriverUpload() {
 
       <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] max-w-md mx-auto space-y-4">
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
           className="bg-card rounded-2xl border border-border shadow-card p-5 space-y-5"
         >
           {/* Hidden file inputs */}
@@ -247,6 +250,26 @@ export default function DriverUpload() {
               rows={2}
             />
           </div>
+
+          {/* Upload progress */}
+          {uploadMutation.isPending && (
+            <motion.div
+              className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: motionTokens.duration.fast }}
+            >
+              <motion.div
+                className="h-full origin-left rounded-full bg-primary"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{
+                  duration: motionTokens.duration.base,
+                  ease: motionTokens.easing.smooth,
+                }}
+              />
+            </motion.div>
+          )}
 
           {/* Submit */}
           <Button

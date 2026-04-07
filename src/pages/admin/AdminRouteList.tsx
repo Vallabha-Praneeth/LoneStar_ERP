@@ -2,14 +2,20 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Plus, Search, Loader2, MapPin, ArrowRight, Hash,
+  Plus, Search, MapPin, ArrowRight, Hash,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+
+const fadeIn = motionTokens.variants.fadeIn;
+const fadeUp = motionTokens.variants.fadeUp;
+const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
 
 interface RouteRow {
   id: string;
@@ -95,9 +101,18 @@ export default function AdminRouteList() {
 
       {/* States */}
       {isLoading && (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeIn}
+          className="grid gap-3"
+          aria-busy
+          aria-label="Loading routes"
+        >
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+          ))}
+        </motion.div>
       )}
 
       {error && (
@@ -123,17 +138,17 @@ export default function AdminRouteList() {
       )}
 
       {/* Route cards */}
-      <div className="grid gap-3">
-        {filtered.map((r, i) => {
+      <motion.div
+        className="grid gap-3"
+        initial="hidden"
+        animate="visible"
+        variants={listStaggerParent}
+      >
+        {filtered.map((r) => {
           const stopCount = r.route_stops?.length ?? 0;
 
           return (
-            <motion.div
-              key={r.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04, ease: "easeOut" }}
-            >
+            <motion.div key={r.id} variants={fadeUp}>
               <div className="group flex items-center bg-card rounded-xl border border-border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
                 {/* Active accent bar */}
                 <div
@@ -189,7 +204,7 @@ export default function AdminRouteList() {
             </motion.div>
           );
         })}
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FileDown,
-  Loader2,
   Camera,
   Clock,
   BarChart3,
@@ -13,8 +12,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
+
+const fadeIn = motionTokens.variants.fadeIn;
+const fadeUp = motionTokens.variants.fadeUp;
+const gridStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.grid } } } as const;
+const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
 
 interface ReportCampaign {
   id: string;
@@ -148,9 +154,21 @@ export default function AdminReports() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        className="space-y-6"
+        aria-busy
+        aria-label="Loading reports"
+      >
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-28 rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-72 w-full rounded-xl" />
+      </motion.div>
     );
   }
 
@@ -163,7 +181,12 @@ export default function AdminReports() {
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={fadeIn}
+      className="space-y-6"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -181,13 +204,16 @@ export default function AdminReports() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {statCards.map((stat, i) => (
+      <motion.div
+        className="grid grid-cols-2 lg:grid-cols-4 gap-3"
+        initial="hidden"
+        animate="visible"
+        variants={gridStaggerParent}
+      >
+        {statCards.map((stat) => (
           <motion.div
             key={stat.key}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05, ease: "easeOut" }}
+            variants={fadeUp}
             className="bg-card rounded-xl border border-border shadow-sm p-4"
           >
             <div className="flex items-center justify-between mb-3">
@@ -207,10 +233,15 @@ export default function AdminReports() {
             </p>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Campaign table */}
-      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+      <motion.div
+        variants={fadeUp}
+        initial="hidden"
+        animate="visible"
+        className="bg-card rounded-xl border border-border shadow-sm overflow-hidden"
+      >
         <div className="px-4 py-3 border-b border-border">
           <h2 className="text-sm font-semibold text-foreground">
             All Campaigns
@@ -241,10 +272,15 @@ export default function AdminReports() {
                 <th className="w-10" />
               </tr>
             </thead>
-            <tbody>
+            <motion.tbody
+              initial="hidden"
+              animate="visible"
+              variants={listStaggerParent}
+            >
               {campaigns.map((c) => (
-                <tr
+                <motion.tr
                   key={c.id}
+                  variants={fadeUp}
                   className="border-b border-border/60 last:border-0 hover:bg-muted/20 transition-colors group"
                 >
                   <td className="px-4 py-3">
@@ -283,12 +319,12 @@ export default function AdminReports() {
                       <ArrowRight className="w-4 h-4 text-muted-foreground" />
                     </Link>
                   </td>
-                </tr>
+                </motion.tr>
               ))}
-            </tbody>
+            </motion.tbody>
           </table>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

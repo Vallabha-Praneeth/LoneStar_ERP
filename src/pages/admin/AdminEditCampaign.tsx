@@ -16,7 +16,12 @@ import { ArrowLeft, Save, Loader2, Plus } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { CampaignCostEditor, CostRow } from "@/components/CampaignCostEditor";
+
+const fadeIn = motionTokens.variants.fadeIn;
+const fadeUp = motionTokens.variants.fadeUp;
 
 interface ClientOption {
   id: string;
@@ -260,9 +265,18 @@ export default function AdminEditCampaign() {
 
   if (campaignQuery.isLoading) {
     return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeIn}
+        className="max-w-2xl space-y-4 py-4"
+        aria-busy
+        aria-label="Loading campaign"
+      >
+        <Skeleton className="h-10 w-full rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
+        <Skeleton className="h-40 w-full rounded-xl" />
+      </motion.div>
     );
   }
 
@@ -279,8 +293,9 @@ export default function AdminEditCampaign() {
       </div>
 
       <motion.form
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
         className="space-y-6"
         onSubmit={handleSubmit}
       >
