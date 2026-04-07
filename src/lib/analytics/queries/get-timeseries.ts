@@ -35,7 +35,7 @@ function bucketKey(campaignDate: string, granularity: AnalyticsGranularity): str
       return format(d, "yyyy-MM-dd");
     case "week": {
       const weekStart = startOfWeek(d, { weekStartsOn: 1 });
-      return format(weekStart, "yyyy-'W'II");
+      return format(weekStart, "RRRR-'W'II");
     }
     case "month":
       return format(d, "yyyy-MM");

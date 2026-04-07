@@ -35,8 +35,10 @@ export function AnalyticsExportButton({ filters }: AnalyticsExportButtonProps) {
       const a = document.createElement("a");
       a.href = url;
       a.download = `analytics-${filters.range}-${format(new Date(), "yyyy-MM-dd")}.csv`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 200);
       setState("done");
       timerRef.current = setTimeout(() => setState("idle"), 2000);
     } catch {

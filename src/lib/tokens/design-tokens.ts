@@ -118,6 +118,7 @@ export const iconSize = {
 export const designTokens = {
   colors,
   chartColors,
+  chartThemeColors,
   typography,
   spacing,
   radius,

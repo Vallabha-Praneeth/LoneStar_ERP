@@ -19,7 +19,7 @@ import type { AnalyticsFilters, AnalyticsRange, CampaignStatus } from "@/lib/ana
 
 interface AnalyticsFilterBarProps {
   filters: AnalyticsFilters;
-  onChange: (filters: AnalyticsFilters) => void;
+  onChange?: (filters: AnalyticsFilters) => void;
 }
 
 export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProps) {
@@ -34,11 +34,12 @@ export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProp
   const { data: clients = [] } = useQuery({
     queryKey: ["analytics-filter-clients"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("clients")
         .select("id, name")
         .eq("is_active", true)
         .order("name");
+      if (error) throw error;
       return data ?? [];
     },
     staleTime: 5 * 60 * 1000,
@@ -47,12 +48,13 @@ export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProp
   const { data: drivers = [] } = useQuery({
     queryKey: ["analytics-filter-drivers"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("id, display_name")
         .eq("role", "driver")
         .eq("is_active", true)
         .order("display_name");
+      if (error) throw error;
       return data ?? [];
     },
     staleTime: 5 * 60 * 1000,
@@ -71,7 +73,7 @@ export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProp
       status: merged.status,
       granularity: merged.granularity,
     });
-    onChange(reparse);
+    onChange?.(reparse);
   }
 
   function handleRangeChange(range: AnalyticsRange) {
@@ -79,7 +81,7 @@ export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProp
   }
 
   function handleClear() {
-    onChange(parseFilters(new URLSearchParams()));
+    onChange?.(parseFilters(new URLSearchParams()));
   }
 
   const hasActiveFilters = !!(filters.clientId || filters.driverId || filters.status);
@@ -96,6 +98,7 @@ export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProp
               value={filters.from}
               onChange={(e) => update({ from: e.target.value })}
               className="w-[150px] h-9 text-sm rounded-lg"
+              aria-label="From date"
             />
             <span className="text-xs text-muted-foreground">to</span>
             <Input
@@ -103,6 +106,7 @@ export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProp
               value={filters.to}
               onChange={(e) => update({ to: e.target.value })}
               className="w-[150px] h-9 text-sm rounded-lg"
+              aria-label="To date"
             />
           </>
         )}

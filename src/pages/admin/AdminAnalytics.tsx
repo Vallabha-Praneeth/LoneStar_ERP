@@ -23,7 +23,7 @@ import { CampaignPerformanceTable } from "@/components/analytics/CampaignPerform
 import { AnalyticsExportButton } from "@/components/analytics/AnalyticsExportButton";
 
 export default function AdminAnalytics() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const filters = useMemo(() => parseFilters(searchParams), [searchParams]);
 
@@ -59,15 +59,6 @@ export default function AdminAnalytics() {
     queryFn: () => getCampaignRows(filters),
   });
 
-  // Mutable filter state — pushed into URL by the filter bar
-  function handleFiltersChange(next: AnalyticsFilters) {
-    // AnalyticsFilterBar handles URL sync via setSearchParams;
-    // the searchParams change triggers useMemo(filters) re-parse above.
-    // This is a no-op here since URL is the source of truth,
-    // but we keep the prop contract for AnalyticsFilterBar.
-    void next;
-  }
-
   const isAnyLoading = summaryLoading;
   const isEmpty = !isAnyLoading && summary && summary.activeCampaigns === 0 && summary.revenue === 0 && summary.billableHours === 0;
 
@@ -89,7 +80,7 @@ export default function AdminAnalytics() {
 
       <DataCompletenessNotice summary={summary} loading={summaryLoading} />
 
-      <AnalyticsFilterBar filters={filters} onChange={handleFiltersChange} />
+      <AnalyticsFilterBar filters={filters} />
 
       <AnimatePresence mode="wait">
         {isEmpty ? (
@@ -101,10 +92,7 @@ export default function AdminAnalytics() {
             transition={{ duration: duration.fast }}
           >
             <AnalyticsEmptyState
-              onReset={() => {
-                window.history.replaceState(null, "", "/admin/analytics");
-                window.dispatchEvent(new PopStateEvent("popstate"));
-              }}
+              onReset={() => setSearchParams(new URLSearchParams(), { replace: true })}
             />
           </motion.div>
         ) : (

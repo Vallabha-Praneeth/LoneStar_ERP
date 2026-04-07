@@ -21,6 +21,7 @@ export function DateRangeTabs({ value, onChange }: DateRangeTabsProps) {
       {RANGE_OPTIONS.map((opt) => (
         <button
           key={opt.value}
+          type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
             "px-3 py-1.5 text-xs font-medium rounded-md transition-colors",

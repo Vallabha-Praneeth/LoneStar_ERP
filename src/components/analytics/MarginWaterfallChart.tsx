@@ -96,8 +96,8 @@ export function MarginWaterfallChart({ summary }: MarginWaterfallChartProps) {
         <Bar dataKey="base" stackId="waterfall" fill="transparent" radius={0} />
         {/* Visible value bar */}
         <Bar dataKey="value" stackId="waterfall" radius={[4, 4, 0, 0]}>
-          {data.map((entry, index) => (
-            <Cell key={index} fill={entry.color} />
+          {data.map((entry) => (
+            <Cell key={entry.name} fill={entry.color} />
           ))}
         </Bar>
       </BarChart>

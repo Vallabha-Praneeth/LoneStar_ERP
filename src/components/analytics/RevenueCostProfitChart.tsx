@@ -103,13 +103,14 @@ export function RevenueCostProfitChart({ data }: RevenueCostProfitChartProps) {
   );
 }
 
+const MONTH_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
 /** Shorten bucket labels for axis readability */
 function formatBucketLabel(bucket: string): string {
   // "2026-04-03" → "Apr 3"
   if (/^\d{4}-\d{2}-\d{2}$/.test(bucket)) {
     const [, m, d] = bucket.split("-");
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    return `${months[parseInt(m, 10) - 1]} ${parseInt(d, 10)}`;
+    return `${MONTH_ABBR[parseInt(m, 10) - 1]} ${parseInt(d, 10)}`;
   }
   // "2026-W14" → "W14"
   if (/^\d{4}-W\d{2}$/.test(bucket)) {
@@ -118,8 +119,7 @@ function formatBucketLabel(bucket: string): string {
   // "2026-04" → "Apr"
   if (/^\d{4}-\d{2}$/.test(bucket)) {
     const m = parseInt(bucket.slice(5), 10);
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    return months[m - 1] ?? bucket;
+    return MONTH_ABBR[m - 1] ?? bucket;
   }
   return bucket;
 }

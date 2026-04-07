@@ -48,17 +48,17 @@ export function exportRowsToCsv(rows: ExportRow[]): string {
   const lines = rows.map((r) =>
     [
       csvWrap(r.campaignName),
-      r.campaignDate,
+      csvWrap(r.campaignDate),
       csvWrap(r.clientName),
       csvWrap(r.driverName),
       csvWrap(r.routeName),
-      r.status,
-      r.revenue,
-      r.driverCost,
-      r.internalCost,
-      r.grossProfit,
-      r.marginPct,
-      r.workedHours,
+      csvWrap(r.status),
+      csvWrap(r.revenue),
+      csvWrap(r.driverCost),
+      csvWrap(r.internalCost),
+      csvWrap(r.grossProfit),
+      csvWrap(r.marginPct),
+      csvWrap(r.workedHours),
     ].join(","),
   );
   return [header, ...lines].join("\n");

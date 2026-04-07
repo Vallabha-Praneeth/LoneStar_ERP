@@ -59,8 +59,9 @@ export function resolveDateBounds(
   const today = format(now, "yyyy-MM-dd");
 
   if (range === "custom") {
-    const from = isValidDate(rawFrom) ? rawFrom : format(subMonths(now, 3), "yyyy-MM-dd");
-    const to = isValidDate(rawTo) ? rawTo : today;
+    let from = isValidDate(rawFrom) ? rawFrom : format(subMonths(now, 3), "yyyy-MM-dd");
+    let to = isValidDate(rawTo) ? rawTo : today;
+    if (from > to) [from, to] = [to, from];
     return { from, to };
   }
 
