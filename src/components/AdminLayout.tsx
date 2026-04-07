@@ -1,15 +1,17 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { AdminSidebar } from "./AdminSidebar";
-import { LayoutDashboard, PlusCircle, FileText, Users, LogOut, Menu, X, MapPin, Settings } from "lucide-react";
+import { LayoutDashboard, PlusCircle, FileText, Users, LogOut, Menu, X, MapPin, Settings, BarChart3, Moon, Sun } from "lucide-react";
 import { Logo } from "./Logo";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/hooks/useTheme";
 
 const mobileNavItems = [
   { label: "Campaigns", path: "/admin/campaigns", icon: LayoutDashboard },
   { label: "Create", path: "/admin/campaigns/create", icon: PlusCircle },
   { label: "Routes", path: "/admin/routes", icon: MapPin },
+  { label: "Analytics", path: "/admin/analytics", icon: BarChart3 },
   { label: "Reports", path: "/admin/reports", icon: FileText },
   { label: "Users", path: "/admin/users", icon: Users },
   { label: "Settings", path: "/admin/settings/cost-types", icon: Settings },
@@ -20,6 +22,7 @@ export function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   async function handleSignOut() {
     setMobileOpen(false);
@@ -59,6 +62,13 @@ export function AdminLayout() {
                 {item.label}
               </Link>
             ))}
+            <button
+              onClick={toggleTheme}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            </button>
             <button
               onClick={handleSignOut}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-muted-foreground"

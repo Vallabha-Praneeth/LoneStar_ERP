@@ -28,6 +28,7 @@ export default defineConfig(({ mode }) => ({
           "vendor-ui": ["@radix-ui/react-dialog", "@radix-ui/react-select", "@radix-ui/react-tooltip", "@radix-ui/react-dropdown-menu"],
           "vendor-pdf": ["jspdf", "jspdf-autotable"],
           "vendor-motion": ["framer-motion"],
+          "vendor-charts": ["recharts", "d3-scale", "d3-shape", "d3-path", "d3-interpolate", "d3-color", "d3-format", "d3-time", "d3-time-format", "d3-array"],
         },
       },
     },

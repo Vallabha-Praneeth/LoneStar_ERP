@@ -1,13 +1,15 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, FileText, LogOut, Users, MapPin, Settings } from "lucide-react";
+import { LayoutDashboard, PlusCircle, FileText, LogOut, Users, MapPin, Settings, BarChart3, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/hooks/useTheme";
 import { Logo } from "./Logo";
 
 const navItems = [
   { label: "Campaigns", path: "/admin/campaigns", icon: LayoutDashboard },
   { label: "Create Campaign", path: "/admin/campaigns/create", icon: PlusCircle },
   { label: "Routes", path: "/admin/routes", icon: MapPin },
+  { label: "Analytics", path: "/admin/analytics", icon: BarChart3 },
   { label: "Reports", path: "/admin/reports", icon: FileText },
   { label: "Users", path: "/admin/users", icon: Users },
   { label: "Settings", path: "/admin/settings/cost-types", icon: Settings },
@@ -17,6 +19,7 @@ export function AdminSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   async function handleSignOut() {
     await signOut();
@@ -67,7 +70,18 @@ export function AdminSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-sidebar-border/50">
+      <div className="p-3 border-t border-sidebar-border/50 space-y-0.5">
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/50 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground transition-colors"
+        >
+          {theme === "dark" ? (
+            <Sun className="w-[18px] h-[18px]" />
+          ) : (
+            <Moon className="w-[18px] h-[18px]" />
+          )}
+          {theme === "dark" ? "Light Mode" : "Dark Mode"}
+        </button>
         <button
           onClick={handleSignOut}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/50 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground transition-colors"
