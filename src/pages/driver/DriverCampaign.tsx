@@ -3,18 +3,14 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Camera, LogIn, LogOut, Clock, ChevronDown, Loader2, History } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { motionTokens } from "@/lib/tokens/motion-tokens";
-
-const fadeUp = motionTokens.variants.fadeUp;
-const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
-const scaleIn = motionTokens.variants.scaleIn;
-const sectionStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.section } } } as const;
+import { fadeUp, scaleIn, listStaggerParent, sectionStaggerParent } from "@/lib/motion/pageMotion";
 
 interface DriverCampaignData {
   id: string;
@@ -170,9 +166,23 @@ export default function DriverCampaign() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        className="min-h-screen bg-background"
+        aria-busy
+        aria-label="Loading campaign"
+      >
+        <div className="bg-card border-b border-border px-4 py-3">
+          <Skeleton className="h-6 w-40" />
+        </div>
+        <div className="p-4 space-y-4">
+          <Skeleton className="h-32 w-full rounded-xl" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+          <Skeleton className="h-12 w-full rounded-xl" />
+        </div>
+      </motion.div>
     );
   }
 

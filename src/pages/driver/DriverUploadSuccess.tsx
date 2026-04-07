@@ -2,9 +2,8 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { motionTokens } from "@/lib/tokens/motion-tokens";
+import { scaleIn } from "@/lib/motion/pageMotion";
 import { CheckCircle2, ArrowLeft } from "lucide-react";
-
-const scaleIn = motionTokens.variants.scaleIn;
 
 export default function DriverUploadSuccess() {
   return (
@@ -19,9 +18,7 @@ export default function DriverUploadSuccess() {
           initial={{ opacity: 0, scale: 0.85 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{
-            type: "spring",
-            stiffness: 420,
-            damping: 22,
+            ...motionTokens.spring.pop,
             delay: 0.05,
           }}
           className="w-16 h-16 bg-success/10 rounded-2xl flex items-center justify-center mx-auto"

@@ -64,7 +64,7 @@ async function fetchDrivers(): Promise<DriverOption[]> {
     .eq("is_active", true)
     .order("display_name");
   if (error) throw error;
-  return (data ?? []).map((d: any) => ({
+  return (data ?? []).map((d: { id: string; display_name: string; drivers: { base_daily_wage: number | null }[] | { base_daily_wage: number | null } | null }) => ({
     id: d.id,
     display_name: d.display_name,
     base_daily_wage: d.drivers?.[0]?.base_daily_wage ?? d.drivers?.base_daily_wage ?? null,

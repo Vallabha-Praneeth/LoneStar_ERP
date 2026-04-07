@@ -68,10 +68,17 @@ export const variants = {
   },
 } as const;
 
+// ─── Spring presets ──────────────────────────────────────────
+export const spring = {
+  /** Snappy pop — checkmarks, success icons */
+  pop: { type: "spring" as const, stiffness: 420, damping: 22 },
+} as const;
+
 // ─── Aggregate export ────────────────────────────────────────
 export const motionTokens = {
   duration,
   easing,
   stagger,
+  spring,
   variants,
 } as const;
