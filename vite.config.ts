@@ -18,6 +18,9 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  test: {
+    exclude: ["tests/e2e-web/**", "node_modules/**"],
+  },
   build: {
     rollupOptions: {
       output: {
