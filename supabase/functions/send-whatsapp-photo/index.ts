@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     const accessToken = Deno.env.get("WHATSAPP_CLOUD_ACCESS_TOKEN")!;
     const phoneNumberId = Deno.env.get("WHATSAPP_CLOUD_PHONE_NUMBER_ID")!;
     const graphVersion = Deno.env.get("WHATSAPP_CLOUD_GRAPH_VERSION") || "v22.0";
-    const templateName = Deno.env.get("WHATSAPP_CLOUD_TEMPLATE_NAME") || "campaign_photo";
+    const templateName = Deno.env.get("WHATSAPP_CLOUD_TEMPLATE_NAME") || "campaign_photo_v2";
     const templateLang = Deno.env.get("WHATSAPP_CLOUD_TEMPLATE_LANGUAGE") || "en";
 
     // Strip leading + from phone number for WhatsApp API (expects digits only)
