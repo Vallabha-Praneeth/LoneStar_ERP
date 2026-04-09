@@ -168,6 +168,7 @@ export default function AdminCampaignDetail() {
   if (isLoading) {
     return (
       <motion.div
+        key="loading"
         initial="hidden"
         animate="visible"
         variants={fadeIn}
@@ -221,6 +222,7 @@ export default function AdminCampaignDetail() {
 
   return (
     <motion.div
+      key="content"
       initial="hidden"
       animate="visible"
       variants={sectionStaggerParent}

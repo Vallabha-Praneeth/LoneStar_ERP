@@ -173,6 +173,7 @@ export default function AdminDriverDetail() {
       )}
 
       <motion.form
+        key="content"
         initial="hidden"
         animate="visible"
         variants={sectionStaggerParent}

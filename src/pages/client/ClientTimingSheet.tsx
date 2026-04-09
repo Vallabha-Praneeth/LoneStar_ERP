@@ -85,8 +85,9 @@ export default function ClientTimingSheet() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div key="loading" className="min-h-screen bg-background flex items-center justify-center p-6">
         <motion.div
+          key="loading"
           initial="hidden"
           animate="visible"
           variants={fadeIn}
@@ -136,7 +137,7 @@ export default function ClientTimingSheet() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div key="content" className="min-h-screen bg-background">
       <div className="bg-card border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -162,6 +163,7 @@ export default function ClientTimingSheet() {
           </div>
         ) : (
           <motion.div
+            key="content"
             initial="hidden"
             animate="visible"
             variants={fadeUp}

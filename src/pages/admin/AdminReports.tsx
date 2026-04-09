@@ -155,6 +155,7 @@ export default function AdminReports() {
   if (isLoading) {
     return (
       <motion.div
+        key="loading"
         initial="hidden"
         animate="visible"
         variants={fadeIn}
@@ -182,6 +183,7 @@ export default function AdminReports() {
 
   return (
     <motion.div
+      key="content"
       initial="hidden"
       animate="visible"
       variants={fadeIn}

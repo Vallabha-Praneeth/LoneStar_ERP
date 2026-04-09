@@ -167,6 +167,7 @@ export default function DriverCampaign() {
   if (isLoading) {
     return (
       <motion.div
+        key="loading"
         initial="hidden"
         animate="visible"
         variants={fadeUp}
@@ -229,6 +230,7 @@ export default function DriverCampaign() {
       </div>
 
       <motion.div
+        key="content"
         initial="hidden"
         animate="visible"
         variants={sectionStaggerParent}
