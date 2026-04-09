@@ -21,6 +21,7 @@ import { TopDriversChart } from "@/components/analytics/TopDriversChart";
 import { MarginWaterfallChart } from "@/components/analytics/MarginWaterfallChart";
 import { CampaignPerformanceTable } from "@/components/analytics/CampaignPerformanceTable";
 import { AnalyticsExportButton } from "@/components/analytics/AnalyticsExportButton";
+import { fadeIn } from "@/lib/motion/pageMotion";
 
 export default function AdminAnalytics() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -75,7 +76,14 @@ export default function AdminAnalytics() {
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      key="content"
+      className="space-y-6"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={fadeIn}
+    >
       <PageHeader filters={filters} />
 
       <DataCompletenessNotice summary={summary} loading={summaryLoading} />
@@ -133,7 +141,7 @@ export default function AdminAnalytics() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
 

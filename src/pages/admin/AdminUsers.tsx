@@ -26,6 +26,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motionTokens } from "@/lib/tokens/motion-tokens";
+import { slideIn } from "@/lib/motion/pageMotion";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -203,7 +204,14 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      key="content"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={fadeIn}
+      className="space-y-6"
+    >
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -303,7 +311,7 @@ export default function AdminUsers() {
           return (
             <motion.div
               key={u.id}
-              variants={fadeUp}
+              variants={slideIn}
               className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border shadow-sm"
             >
               {/* Avatar with role color */}
@@ -474,6 +482,6 @@ export default function AdminUsers() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }

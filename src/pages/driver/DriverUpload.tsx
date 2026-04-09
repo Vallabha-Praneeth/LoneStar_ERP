@@ -11,6 +11,13 @@ import { toast } from "sonner";
 import { fadeUp } from "@/lib/motion/pageMotion";
 import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { compressImage } from "@/lib/compressImage";
+const quickFadeUp = {
+  ...fadeUp,
+  visible: {
+    ...fadeUp.visible,
+    transition: { ...fadeUp.visible.transition, duration: motionTokens.duration.fast },
+  },
+} as const;
 
 interface ActiveCampaign {
   id: string;
@@ -164,7 +171,14 @@ export default function DriverUpload() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <motion.div
+      key="content"
+      className="min-h-screen bg-background"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={quickFadeUp}
+    >
       <div className="bg-card border-b border-border px-4 py-3 flex items-center gap-2">
         <Link to="/driver/campaign" className="text-muted-foreground">
           <ChevronLeft className="w-5 h-5" />
@@ -176,7 +190,7 @@ export default function DriverUpload() {
         <motion.div
           initial="hidden"
           animate="visible"
-          variants={fadeUp}
+          variants={quickFadeUp}
           className="bg-card rounded-2xl border border-border shadow-card p-5 space-y-5"
         >
           {/* Hidden file inputs */}
@@ -288,6 +302,6 @@ export default function DriverUpload() {
           </Button>
         </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

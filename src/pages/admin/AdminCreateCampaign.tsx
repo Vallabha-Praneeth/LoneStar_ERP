@@ -18,6 +18,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { motionTokens } from "@/lib/tokens/motion-tokens";
+import { fadeIn } from "@/lib/motion/pageMotion";
 import { CreateClientDialog } from "@/components/CreateClientDialog";
 import { CreateDriverDialog } from "@/components/CreateDriverDialog";
 import { CampaignCostEditor, CostRow } from "@/components/CampaignCostEditor";
@@ -248,7 +249,14 @@ export default function AdminCreateCampaign() {
   const costTypes = costTypesQuery.data ?? [];
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <motion.div
+      key="content"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={fadeIn}
+      className="max-w-2xl space-y-6"
+    >
       <div className="flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-5 h-5" />
@@ -473,6 +481,6 @@ export default function AdminCreateCampaign() {
           setDriverId(driver.id);
         }}
       />
-    </div>
+    </motion.div>
   );
 }

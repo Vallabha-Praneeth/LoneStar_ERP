@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motionTokens } from "@/lib/tokens/motion-tokens";
+import { slideIn } from "@/lib/motion/pageMotion";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -70,7 +71,14 @@ export default function AdminRouteList() {
   }, [routes, search]);
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      key="content"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={fadeIn}
+      className="space-y-6"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -148,7 +156,7 @@ export default function AdminRouteList() {
           const stopCount = r.route_stops?.length ?? 0;
 
           return (
-            <motion.div key={r.id} variants={fadeUp}>
+            <motion.div key={r.id} variants={slideIn}>
               <div className="group flex items-center bg-card rounded-xl border border-border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
                 {/* Active accent bar */}
                 <div
@@ -205,6 +213,6 @@ export default function AdminRouteList() {
           );
         })}
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

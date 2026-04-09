@@ -80,7 +80,14 @@ export default function AdminCostTypes() {
   }
 
   return (
-    <div className="max-w-xl space-y-6">
+    <motion.div
+      key="content"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={fadeIn}
+      className="max-w-xl space-y-6"
+    >
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground tracking-tight">
@@ -184,6 +191,6 @@ export default function AdminCostTypes() {
           </motion.div>
         ))}
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

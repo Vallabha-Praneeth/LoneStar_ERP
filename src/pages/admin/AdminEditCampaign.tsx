@@ -18,6 +18,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motionTokens } from "@/lib/tokens/motion-tokens";
+import { fadeIn as pageFadeIn } from "@/lib/motion/pageMotion";
 import { CampaignCostEditor, CostRow } from "@/components/CampaignCostEditor";
 
 const fadeIn = motionTokens.variants.fadeIn;
@@ -266,8 +267,10 @@ export default function AdminEditCampaign() {
   if (campaignQuery.isLoading) {
     return (
       <motion.div
+        key="loading"
         initial="hidden"
         animate="visible"
+        exit="exit"
         variants={fadeIn}
         className="max-w-2xl space-y-4 py-4"
         aria-busy
@@ -281,7 +284,14 @@ export default function AdminEditCampaign() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <motion.div
+      key="content"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={pageFadeIn}
+      className="max-w-2xl space-y-6"
+    >
       <div className="flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-5 h-5" />
@@ -453,6 +463,6 @@ export default function AdminEditCampaign() {
           </Button>
         </div>
       </motion.form>
-    </div>
+    </motion.div>
   );
 }

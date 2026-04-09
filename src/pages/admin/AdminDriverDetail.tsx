@@ -126,8 +126,10 @@ export default function AdminDriverDetail() {
   if (driverQuery.isLoading) {
     return (
       <motion.div
+        key="loading"
         initial="hidden"
         animate="visible"
+        exit="exit"
         variants={fadeIn}
         className="max-w-2xl space-y-4 py-4"
         aria-busy
@@ -143,7 +145,14 @@ export default function AdminDriverDetail() {
   const username = driver?.profiles?.username ?? "";
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <motion.div
+      key="content"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={fadeIn}
+      className="max-w-2xl space-y-6"
+    >
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate("/admin/users")}
@@ -293,6 +302,6 @@ export default function AdminDriverDetail() {
           </Button>
         </motion.div>
       </motion.form>
-    </div>
+    </motion.div>
   );
 }

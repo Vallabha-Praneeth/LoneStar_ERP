@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -42,6 +43,92 @@ const ClientTimingSheet = lazy(() => import("./pages/client/ClientTimingSheet"))
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 const queryClient = new QueryClient();
+
+function AppRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<RoleSelect />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Driver */}
+        <Route path="/driver/login" element={<DriverLogin />} />
+        <Route
+          path="/driver/campaign"
+          element={
+            <ProtectedRoute role="driver">
+              <DriverCampaign />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/driver/upload"
+          element={
+            <ProtectedRoute role="driver">
+              <DriverUpload />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/driver/upload-success"
+          element={
+            <ProtectedRoute role="driver">
+              <DriverUploadSuccess />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="campaigns" element={<AdminCampaignList />} />
+          <Route path="campaigns/create" element={<AdminCreateCampaign />} />
+          <Route path="campaigns/:id" element={<AdminCampaignDetail />} />
+          <Route path="campaigns/:id/edit" element={<AdminEditCampaign />} />
+          <Route path="campaigns/:id/photos" element={<AdminPhotoManagement />} />
+          <Route path="reports" element={<AdminReports />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="routes" element={<AdminRouteList />} />
+          <Route path="routes/create" element={<AdminRouteForm />} />
+          <Route path="routes/:id/edit" element={<AdminRouteForm />} />
+          <Route path="drivers/:id" element={<AdminDriverDetail />} />
+          <Route path="settings/cost-types" element={<AdminCostTypes />} />
+        </Route>
+
+        {/* Client */}
+        <Route path="/client/login" element={<ClientLogin />} />
+        <Route
+          path="/client/campaign"
+          element={
+            <ProtectedRoute role="client">
+              <ClientCampaignView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/client/campaign/timing"
+          element={
+            <ProtectedRoute role="client">
+              <ClientTimingSheet />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
 
 function PageSpinner() {
   return (
@@ -86,83 +173,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <Suspense fallback={<PageSpinner />}>
-              <Routes>
-                <Route path="/" element={<RoleSelect />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-
-                {/* Driver */}
-                <Route path="/driver/login" element={<DriverLogin />} />
-                <Route
-                  path="/driver/campaign"
-                  element={
-                    <ProtectedRoute role="driver">
-                      <DriverCampaign />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/driver/upload"
-                  element={
-                    <ProtectedRoute role="driver">
-                      <DriverUpload />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/driver/upload-success"
-                  element={
-                    <ProtectedRoute role="driver">
-                      <DriverUploadSuccess />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Admin */}
-                <Route path="/admin/login" element={<AdminLogin />} />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute role="admin">
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route path="campaigns" element={<AdminCampaignList />} />
-                  <Route path="campaigns/create" element={<AdminCreateCampaign />} />
-                  <Route path="campaigns/:id" element={<AdminCampaignDetail />} />
-                  <Route path="campaigns/:id/edit" element={<AdminEditCampaign />} />
-                  <Route path="campaigns/:id/photos" element={<AdminPhotoManagement />} />
-                  <Route path="reports" element={<AdminReports />} />
-                  <Route path="analytics" element={<AdminAnalytics />} />
-                  <Route path="users" element={<AdminUsers />} />
-                  <Route path="routes" element={<AdminRouteList />} />
-                  <Route path="routes/create" element={<AdminRouteForm />} />
-                  <Route path="routes/:id/edit" element={<AdminRouteForm />} />
-                  <Route path="drivers/:id" element={<AdminDriverDetail />} />
-                  <Route path="settings/cost-types" element={<AdminCostTypes />} />
-                </Route>
-
-                {/* Client */}
-                <Route path="/client/login" element={<ClientLogin />} />
-                <Route
-                  path="/client/campaign"
-                  element={
-                    <ProtectedRoute role="client">
-                      <ClientCampaignView />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/client/campaign/timing"
-                  element={
-                    <ProtectedRoute role="client">
-                      <ClientTimingSheet />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <AppRoutes />
             </Suspense>
           </AuthProvider>
         </BrowserRouter>

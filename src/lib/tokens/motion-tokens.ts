@@ -24,7 +24,7 @@ export const duration = {
 // ─── Easing curves ──────────────────────────────────────────
 export const easing = {
   /** Expo out — screen enters, content slides up */
-  reveal: [0.16, 1, 0.3, 1] as const,
+  reveal: [0.22, 1, 0.36, 1] as const,
   /** Material standard — web transitions */
   smooth: [0.4, 0, 0.2, 1] as const,
   /** Fast exit — dismissals, hide actions */
@@ -44,11 +44,16 @@ export const stagger = {
 // ─── Common animation variants ──────────────────────────────
 export const variants = {
   fadeUp: {
-    hidden: { opacity: 0, y: 10 },
+    hidden: { opacity: 0, y: 18 },
     visible: {
       opacity: 1,
       y: 0,
       transition: { duration: duration.base, ease: easing.smooth },
+    },
+    exit: {
+      opacity: 0,
+      y: -8,
+      transition: { duration: 0.15, ease: easing.out },
     },
   },
   fadeIn: {
@@ -64,6 +69,29 @@ export const variants = {
       opacity: 1,
       scale: 1,
       transition: { duration: duration.fast, ease: easing.smooth },
+    },
+  },
+  slideIn: {
+    hidden: { opacity: 0, x: -12 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: duration.fast, ease: easing.smooth },
+    },
+  },
+  cardReveal: {
+    hidden: { opacity: 0, y: 12, scale: 0.97 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { duration: duration.base, ease: easing.reveal },
+    },
+    exit: {
+      opacity: 0,
+      y: -8,
+      scale: 0.99,
+      transition: { duration: 0.15, ease: easing.out },
     },
   },
 } as const;

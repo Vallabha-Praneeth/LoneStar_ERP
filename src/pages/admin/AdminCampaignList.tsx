@@ -24,13 +24,9 @@ import {
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { motionTokens } from "@/lib/tokens/motion-tokens";
+import { fadeIn, listStaggerParent, cardReveal } from "@/lib/motion/pageMotion";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
-
-const fadeIn = motionTokens.variants.fadeIn;
-const fadeUp = motionTokens.variants.fadeUp;
-const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
 
 interface CampaignRow {
   id: string;
@@ -98,7 +94,14 @@ export default function AdminCampaignList() {
   }, [campaigns, search, statusFilter]);
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      key="content"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={fadeIn}
+      className="space-y-6"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -194,7 +197,7 @@ export default function AdminCampaignList() {
           const photoCount = c.campaign_photos?.length ?? 0;
 
           return (
-            <motion.div key={c.id} variants={fadeUp}>
+            <motion.div key={c.id} variants={cardReveal}>
               <Link
                 to={`/admin/campaigns/${c.id}`}
                 className="group flex items-stretch bg-card rounded-xl border border-border shadow-sm hover:shadow-md hover:-translate-y-[1px] transition-all duration-200 overflow-hidden"
@@ -267,6 +270,6 @@ export default function AdminCampaignList() {
           );
         })}
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

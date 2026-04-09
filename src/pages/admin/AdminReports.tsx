@@ -13,14 +13,10 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fadeIn, fadeUp, gridStaggerParent, listStaggerParent, cardReveal } from "@/lib/motion/pageMotion";
 import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
-
-const fadeIn = motionTokens.variants.fadeIn;
-const fadeUp = motionTokens.variants.fadeUp;
-const gridStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.grid } } } as const;
-const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
 
 interface ReportCampaign {
   id: string;
@@ -165,10 +161,21 @@ export default function AdminReports() {
       >
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-28 rounded-xl" />
+            <motion.div
+              key={i}
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Skeleton className="h-28 rounded-xl" />
+            </motion.div>
           ))}
         </div>
-        <Skeleton className="h-72 w-full rounded-xl" />
+        <motion.div
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <Skeleton className="h-72 w-full rounded-xl" />
+        </motion.div>
       </motion.div>
     );
   }
@@ -186,6 +193,7 @@ export default function AdminReports() {
       key="content"
       initial="hidden"
       animate="visible"
+      exit="exit"
       variants={fadeIn}
       className="space-y-6"
     >
@@ -215,7 +223,7 @@ export default function AdminReports() {
         {statCards.map((stat) => (
           <motion.div
             key={stat.key}
-            variants={fadeUp}
+            variants={cardReveal}
             className="bg-card rounded-xl border border-border shadow-sm p-4"
           >
             <div className="flex items-center justify-between mb-3">

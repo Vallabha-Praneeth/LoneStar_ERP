@@ -27,15 +27,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
-import { motionTokens } from "@/lib/tokens/motion-tokens";
+import { fadeIn, fadeUp, gridStaggerParent, sectionStaggerParent, cardReveal } from "@/lib/motion/pageMotion";
 import { generateCampaignPdf } from "@/lib/generateCampaignPdf";
 import { toast } from "sonner";
 import type { ShiftStatus } from "@/lib/types";
-
-const fadeIn = motionTokens.variants.fadeIn;
-const fadeUp = motionTokens.variants.fadeUp;
-const gridStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.grid } } } as const;
-const sectionStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.section } } } as const;
+const sectionFadeUp = {
+  ...fadeUp,
+  hidden: { ...fadeUp.hidden, y: 20 },
+} as const;
 
 interface CampaignCostItem {
   id: string;
@@ -172,24 +171,37 @@ export default function AdminCampaignDetail() {
         initial="hidden"
         animate="visible"
         variants={fadeIn}
+        exit="exit"
         className="space-y-6 max-w-5xl"
         aria-busy
         aria-label="Loading campaign"
       >
         <div className="flex items-center gap-3">
-          <Skeleton className="h-10 w-10 rounded-lg" />
+          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+            <Skeleton className="h-10 w-10 rounded-lg" />
+          </motion.div>
           <div className="flex-1 space-y-2">
-            <Skeleton className="h-8 w-64 rounded-lg" />
-            <Skeleton className="h-4 w-48 rounded-lg" />
+            <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+              <Skeleton className="h-8 w-64 rounded-lg" />
+            </motion.div>
+            <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+              <Skeleton className="h-4 w-48 rounded-lg" />
+            </motion.div>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
+            <motion.div key={i} animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+              <Skeleton className="h-24 rounded-xl" />
+            </motion.div>
           ))}
         </div>
-        <Skeleton className="h-40 rounded-xl" />
-        <Skeleton className="h-56 rounded-xl" />
+        <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+          <Skeleton className="h-40 rounded-xl" />
+        </motion.div>
+        <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+          <Skeleton className="h-56 rounded-xl" />
+        </motion.div>
       </motion.div>
     );
   }
@@ -225,10 +237,11 @@ export default function AdminCampaignDetail() {
       key="content"
       initial="hidden"
       animate="visible"
+      exit="exit"
       variants={sectionStaggerParent}
       className="space-y-6"
     >
-      <motion.div variants={fadeUp} className="flex items-center gap-3">
+      <motion.div variants={sectionFadeUp} className="flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -359,7 +372,7 @@ export default function AdminCampaignDetail() {
         ].map((item) => (
           <motion.div
             key={item.label}
-            variants={fadeUp}
+            variants={cardReveal}
             className="bg-card rounded-xl border border-border shadow-card p-4"
           >
             <div className="flex items-center gap-2 mb-1">

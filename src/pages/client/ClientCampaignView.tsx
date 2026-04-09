@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fadeIn, fadeUp, gridStaggerParent } from "@/lib/motion/pageMotion";
+import { fadeIn, fadeUp, gridStaggerParent, scaleIn } from "@/lib/motion/pageMotion";
 import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { generateClientPdf } from "@/lib/generateClientPdf";
 
@@ -112,10 +112,12 @@ export default function ClientCampaignView() {
 
   if (campaignQuery.isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div key="loading" className="min-h-screen bg-background flex items-center justify-center p-6">
         <motion.div
+          key="loading"
           initial="hidden"
           animate="visible"
+          exit="exit"
           variants={fadeIn}
           className="w-full max-w-md space-y-4"
           aria-busy
@@ -137,7 +139,14 @@ export default function ClientCampaignView() {
   const signedUrls = urlsQuery.data ?? {};
 
   return (
-    <div className="min-h-screen bg-background">
+    <motion.div
+      key="content"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={fadeIn}
+      className="min-h-screen bg-background"
+    >
       {/* Header */}
       <div className="bg-card border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -293,7 +302,7 @@ export default function ClientCampaignView() {
                   {photos.map((photo, i) => (
                     <motion.div
                       key={photo.id}
-                      variants={fadeUp}
+                      variants={scaleIn}
                       className="bg-card rounded-xl border border-border overflow-hidden shadow-card cursor-pointer hover:shadow-md transition-shadow"
                       onClick={() => signedUrls[photo.id] && setLightboxIndex(i)}
                     >
@@ -399,6 +408,6 @@ export default function ClientCampaignView() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

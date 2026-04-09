@@ -10,7 +10,7 @@ import { format } from "date-fns";
 
 const fadeIn = motionTokens.variants.fadeIn;
 const fadeUp = motionTokens.variants.fadeUp;
-const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
+const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.section } } } as const;
 
 interface ShiftData {
   id: string;
@@ -90,13 +90,18 @@ export default function ClientTimingSheet() {
           key="loading"
           initial="hidden"
           animate="visible"
+          exit="exit"
           variants={fadeIn}
           className="w-full max-w-sm space-y-3"
           aria-busy
           aria-label="Loading timing"
         >
-          <Skeleton className="h-40 w-full rounded-2xl" />
-          <Skeleton className="h-10 w-full rounded-lg" />
+          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+            <Skeleton className="h-40 w-full rounded-2xl" />
+          </motion.div>
+          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+            <Skeleton className="h-10 w-full rounded-lg" />
+          </motion.div>
         </motion.div>
       </div>
     );
@@ -137,7 +142,7 @@ export default function ClientTimingSheet() {
   ];
 
   return (
-    <div key="content" className="min-h-screen bg-background">
+    <motion.div key="content" className="min-h-screen bg-background" initial="hidden" animate="visible" exit="exit" variants={fadeIn}>
       <div className="bg-card border-b border-border">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -213,6 +218,6 @@ export default function ClientTimingSheet() {
           </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

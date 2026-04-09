@@ -11,6 +11,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motionTokens } from "@/lib/tokens/motion-tokens";
+import { fadeIn as pageFadeIn } from "@/lib/motion/pageMotion";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -185,8 +186,10 @@ export default function AdminRouteForm() {
   if (isEdit && routeQuery.isLoading) {
     return (
       <motion.div
+        key="loading"
         initial="hidden"
         animate="visible"
+        exit="exit"
         variants={fadeIn}
         className="max-w-2xl space-y-4 py-4"
         aria-busy
@@ -200,7 +203,14 @@ export default function AdminRouteForm() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <motion.div
+      key="content"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={pageFadeIn}
+      className="max-w-2xl space-y-6"
+    >
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate("/admin/routes")}
@@ -375,6 +385,6 @@ export default function AdminRouteForm() {
           </Button>
         </div>
       </motion.form>
-    </div>
+    </motion.div>
   );
 }

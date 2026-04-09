@@ -11,6 +11,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { fadeUp, scaleIn, listStaggerParent, sectionStaggerParent } from "@/lib/motion/pageMotion";
+import { motionTokens } from "@/lib/tokens/motion-tokens";
+
+const quickFadeUp = {
+  ...fadeUp,
+  visible: {
+    ...fadeUp.visible,
+    transition: { ...fadeUp.visible.transition, duration: motionTokens.duration.fast },
+  },
+} as const;
 
 interface DriverCampaignData {
   id: string;
@@ -170,18 +179,27 @@ export default function DriverCampaign() {
         key="loading"
         initial="hidden"
         animate="visible"
-        variants={fadeUp}
+        exit="exit"
+        variants={quickFadeUp}
         className="min-h-screen bg-background"
         aria-busy
         aria-label="Loading campaign"
       >
         <div className="bg-card border-b border-border px-4 py-3">
-          <Skeleton className="h-6 w-40" />
+          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+            <Skeleton className="h-6 w-40" />
+          </motion.div>
         </div>
         <div className="p-4 space-y-4">
-          <Skeleton className="h-32 w-full rounded-xl" />
-          <Skeleton className="h-12 w-full rounded-xl" />
-          <Skeleton className="h-12 w-full rounded-xl" />
+          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+            <Skeleton className="h-32 w-full rounded-xl" />
+          </motion.div>
+          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+            <Skeleton className="h-12 w-full rounded-xl" />
+          </motion.div>
+          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+            <Skeleton className="h-12 w-full rounded-xl" />
+          </motion.div>
         </div>
       </motion.div>
     );
@@ -212,7 +230,7 @@ export default function DriverCampaign() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <motion.div className="min-h-screen bg-background" key="content" initial="hidden" animate="visible" exit="exit" variants={quickFadeUp}>
       {/* Header */}
       <div className="bg-card border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -238,7 +256,7 @@ export default function DriverCampaign() {
       >
         {/* Campaign Card */}
         <motion.div
-          variants={fadeUp}
+          variants={quickFadeUp}
           className="bg-card rounded-2xl border border-border shadow-card p-5 space-y-4"
         >
           <div>
@@ -314,7 +332,7 @@ export default function DriverCampaign() {
 
         {/* Recent uploads */}
         {recentPhotos.length > 0 && (
-          <motion.div variants={fadeUp} className="bg-card rounded-2xl border border-border shadow-card p-5">
+          <motion.div variants={quickFadeUp} className="bg-card rounded-2xl border border-border shadow-card p-5">
             <h3 className="font-medium text-foreground mb-3">Recent Uploads</h3>
             <div className="space-y-2">
               {recentPhotos.map((photo) => (
@@ -337,7 +355,7 @@ export default function DriverCampaign() {
 
         {/* Past campaigns */}
         {(historyQuery.data?.length ?? 0) > 0 && (
-          <motion.div variants={fadeUp} className="bg-card rounded-2xl border border-border shadow-card">
+          <motion.div variants={quickFadeUp} className="bg-card rounded-2xl border border-border shadow-card">
             <button
               onClick={() => setShowHistory(!showHistory)}
               className="w-full flex items-center justify-between p-5"
@@ -370,6 +388,6 @@ export default function DriverCampaign() {
           </motion.div>
         )}
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

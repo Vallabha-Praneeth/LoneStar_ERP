@@ -27,3 +27,5 @@ export const sectionStaggerParent = {
 export const fadeUp = motionTokens.variants.fadeUp;
 export const fadeIn = motionTokens.variants.fadeIn;
 export const scaleIn = motionTokens.variants.scaleIn;
+export const slideIn = motionTokens.variants.slideIn;
+export const cardReveal = motionTokens.variants.cardReveal;
