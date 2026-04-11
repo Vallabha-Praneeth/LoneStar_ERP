@@ -74,7 +74,10 @@ export function resolveDateBounds(
     };
   }
 
-  const months = RANGE_MONTHS[range as Exclude<AnalyticsRange, "custom">]!;
+  const months = RANGE_MONTHS[range as Exclude<AnalyticsRange, "custom">];
+  if (months === undefined) {
+    throw new Error(`Unsupported analytics range: ${range}`);
+  }
   return {
     from: format(subMonths(now, months), "yyyy-MM-dd"),
     to: today,
