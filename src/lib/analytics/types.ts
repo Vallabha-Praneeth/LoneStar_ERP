@@ -1,7 +1,7 @@
 // Analytics domain types — shared contracts consumed by queries, UI, and export.
 // These are analytics-specific; domain entity types live in @/lib/types.
 
-export type AnalyticsRange = "1m" | "3m" | "6m" | "9m" | "1y" | "custom";
+export type AnalyticsRange = "1w" | "1m" | "3m" | "6m" | "9m" | "1y" | "custom";
 export type AnalyticsGranularity = "day" | "week" | "month";
 export type CampaignStatus = "draft" | "pending" | "active" | "completed";
 

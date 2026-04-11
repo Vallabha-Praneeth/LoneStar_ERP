@@ -1,7 +1,8 @@
-import { subMonths, format, differenceInDays, parseISO, isValid } from "date-fns";
+import { subDays, subMonths, format, differenceInDays, parseISO, isValid } from "date-fns";
 import type { AnalyticsFilters, AnalyticsRange, AnalyticsGranularity, CampaignStatus } from "./types";
 import {
   DEFAULT_RANGE,
+  RANGE_DAYS,
   RANGE_MONTHS,
   RANGE_GRANULARITY,
   VALID_RANGES,
@@ -65,7 +66,15 @@ export function resolveDateBounds(
     return { from, to };
   }
 
-  const months = RANGE_MONTHS[range];
+  const days = RANGE_DAYS[range as Exclude<AnalyticsRange, "custom">];
+  if (days !== undefined) {
+    return {
+      from: format(subDays(now, days), "yyyy-MM-dd"),
+      to: today,
+    };
+  }
+
+  const months = RANGE_MONTHS[range as Exclude<AnalyticsRange, "custom">]!;
   return {
     from: format(subMonths(now, months), "yyyy-MM-dd"),
     to: today,
