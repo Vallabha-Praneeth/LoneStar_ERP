@@ -1,7 +1,13 @@
 import type { AnalyticsRange, AnalyticsGranularity, CampaignStatus } from "./types";
 
-/** How many months each preset range covers */
-export const RANGE_MONTHS: Record<Exclude<AnalyticsRange, "custom">, number> = {
+/** Ranges measured in days (short presets) */
+export const RANGE_DAYS: Partial<Record<Exclude<AnalyticsRange, "custom">, number>> = {
+  "1d": 1,
+  "1w": 7,
+};
+
+/** How many months each month-based preset covers */
+export const RANGE_MONTHS: Partial<Record<Exclude<AnalyticsRange, "custom">, number>> = {
   "1m": 1,
   "3m": 3,
   "6m": 6,
@@ -11,6 +17,8 @@ export const RANGE_MONTHS: Record<Exclude<AnalyticsRange, "custom">, number> = {
 
 /** Default granularity per range preset */
 export const RANGE_GRANULARITY: Record<Exclude<AnalyticsRange, "custom">, AnalyticsGranularity> = {
+  "1d": "day",
+  "1w": "day",
   "1m": "day",
   "3m": "week",
   "6m": "week",
@@ -20,7 +28,7 @@ export const RANGE_GRANULARITY: Record<Exclude<AnalyticsRange, "custom">, Analyt
 
 export const DEFAULT_RANGE: AnalyticsRange = "3m";
 
-export const VALID_RANGES: AnalyticsRange[] = ["1m", "3m", "6m", "9m", "1y", "custom"];
+export const VALID_RANGES: AnalyticsRange[] = ["1d", "1w", "1m", "3m", "6m", "9m", "1y", "custom"];
 
 export const VALID_STATUSES: CampaignStatus[] = ["draft", "pending", "active", "completed"];
 

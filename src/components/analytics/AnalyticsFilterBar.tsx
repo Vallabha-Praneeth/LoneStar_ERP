@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -24,11 +23,6 @@ interface AnalyticsFilterBarProps {
 
 export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProps) {
   const [, setSearchParams] = useSearchParams();
-
-  // Sync filters to URL whenever they change
-  useEffect(() => {
-    setSearchParams(filtersToSearchParams(filters), { replace: true });
-  }, [filters, setSearchParams]);
 
   // Fetch clients and drivers for select dropdowns
   const { data: clients = [] } = useQuery({
@@ -73,6 +67,7 @@ export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProp
       status: merged.status,
       granularity: merged.granularity,
     });
+    setSearchParams(filtersToSearchParams(reparse), { replace: true });
     onChange?.(reparse);
   }
 
@@ -81,7 +76,9 @@ export function AnalyticsFilterBar({ filters, onChange }: AnalyticsFilterBarProp
   }
 
   function handleClear() {
-    onChange?.(parseFilters(new URLSearchParams()));
+    const cleared = parseFilters(new URLSearchParams());
+    setSearchParams(filtersToSearchParams(cleared), { replace: true });
+    onChange?.(cleared);
   }
 
   const hasActiveFilters = !!(filters.clientId || filters.driverId || filters.status);
