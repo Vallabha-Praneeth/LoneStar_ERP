@@ -4,13 +4,14 @@ import { ArrowLeft, Clock, CheckCircle2, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { motionTokens } from "@/lib/tokens/motion-tokens";
+import {
+  fadeIn,
+  fadeUp,
+  sectionStaggerParent,
+  skeletonPulse,
+} from "@/lib/motion/pageMotion";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
-
-const fadeIn = motionTokens.variants.fadeIn;
-const fadeUp = motionTokens.variants.fadeUp;
-const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.section } } } as const;
 
 interface ShiftData {
   id: string;
@@ -96,10 +97,10 @@ export default function ClientTimingSheet() {
           aria-busy
           aria-label="Loading timing"
         >
-          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+          <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
             <Skeleton className="h-40 w-full rounded-2xl" />
           </motion.div>
-          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+          <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
             <Skeleton className="h-10 w-full rounded-lg" />
           </motion.div>
         </motion.div>
@@ -168,7 +169,6 @@ export default function ClientTimingSheet() {
           </div>
         ) : (
           <motion.div
-            key="content"
             initial="hidden"
             animate="visible"
             variants={fadeUp}
@@ -183,7 +183,7 @@ export default function ClientTimingSheet() {
               className="space-y-0"
               initial="hidden"
               animate="visible"
-              variants={listStaggerParent}
+              variants={sectionStaggerParent}
             >
               {timingRows.map((item, i) => (
                 <motion.div key={item.label} variants={fadeUp} className="flex items-center gap-4 relative">

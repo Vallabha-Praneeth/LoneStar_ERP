@@ -9,11 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { motionTokens } from "@/lib/tokens/motion-tokens";
-
-const fadeIn = motionTokens.variants.fadeIn;
-const fadeUp = motionTokens.variants.fadeUp;
-const sectionStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.section } } } as const;
+import { fadeIn, fadeUp, skeletonPulse } from "@/lib/motion/pageMotion";
 
 interface DriverData {
   id: string;
@@ -135,8 +131,12 @@ export default function AdminDriverDetail() {
         aria-busy
         aria-label="Loading driver"
       >
-        <Skeleton className="h-10 w-2/3 rounded-xl" />
-        <Skeleton className="h-64 w-full rounded-xl" />
+        <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
+          <Skeleton className="h-10 w-2/3 rounded-xl" />
+        </motion.div>
+        <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
+          <Skeleton className="h-64 w-full rounded-xl" />
+        </motion.div>
       </motion.div>
     );
   }
@@ -182,15 +182,14 @@ export default function AdminDriverDetail() {
       )}
 
       <motion.form
-        key="content"
         initial="hidden"
         animate="visible"
-        variants={sectionStaggerParent}
+        variants={fadeUp}
         className="space-y-6"
         onSubmit={handleSubmit}
       >
         {/* License */}
-        <motion.div variants={fadeUp} className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
+        <div className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
           <h2 className="font-semibold text-foreground">License Information</h2>
           <div className="grid gap-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -223,10 +222,10 @@ export default function AdminDriverDetail() {
               />
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Emergency contact */}
-        <motion.div variants={fadeUp} className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
+        <div className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
           <h2 className="font-semibold text-foreground">Emergency Contact</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -248,10 +247,10 @@ export default function AdminDriverDetail() {
               />
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Compensation & location */}
-        <motion.div variants={fadeUp} className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
+        <div className="bg-card rounded-xl border border-border shadow-card p-6 space-y-4">
           <h2 className="font-semibold text-foreground">Compensation & Location</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -276,10 +275,10 @@ export default function AdminDriverDetail() {
               />
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {/* Actions */}
-        <motion.div variants={fadeUp} className="flex gap-3 justify-end">
+        <div className="flex gap-3 justify-end">
           <Button
             type="button"
             variant="outline"
@@ -300,7 +299,7 @@ export default function AdminDriverDetail() {
             )}
             Save Details
           </Button>
-        </motion.div>
+        </div>
       </motion.form>
     </motion.div>
   );

@@ -6,13 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { motionTokens } from "@/lib/tokens/motion-tokens";
+import { fadeIn, fadeUp, listStaggerParent, skeletonPulse, slideIn } from "@/lib/motion/pageMotion";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-
-const fadeIn = motionTokens.variants.fadeIn;
-const fadeUp = motionTokens.variants.fadeUp;
-const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
 
 interface CostTypeRow {
   id: string;
@@ -131,13 +127,16 @@ export default function AdminCostTypes() {
         <motion.div
           initial="hidden"
           animate="visible"
+          exit="exit"
           variants={fadeIn}
           className="space-y-2 py-4"
           aria-busy
           aria-label="Loading cost types"
         >
           {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-14 w-full rounded-xl" />
+            <motion.div key={i} animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
+              <Skeleton className="h-14 w-full rounded-xl" />
+            </motion.div>
           ))}
         </motion.div>
       )}
@@ -164,7 +163,7 @@ export default function AdminCostTypes() {
         {costTypes.map((ct) => (
           <motion.div
             key={ct.id}
-            variants={fadeUp}
+            variants={slideIn}
             className="flex items-center justify-between px-5 py-3.5"
           >
             <div className="flex items-center gap-3 min-w-0">

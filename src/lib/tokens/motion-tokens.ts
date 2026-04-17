@@ -60,7 +60,11 @@ export const variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { duration: duration.fast },
+      transition: { duration: duration.fast, ease: easing.smooth },
+    },
+    exit: {
+      opacity: 0,
+      transition: { duration: 0.15, ease: easing.out },
     },
   },
   scaleIn: {
@@ -96,6 +100,16 @@ export const variants = {
   },
 } as const;
 
+/** Shared pulse for loading skeleton wrappers (Framer Motion). */
+export const skeletonPulse = {
+  animate: { opacity: [0.4, 1, 0.4] } as const,
+  transition: {
+    duration: 1.2,
+    repeat: Infinity,
+    ease: "easeInOut" as const,
+  },
+} as const;
+
 // ─── Spring presets ──────────────────────────────────────────
 export const spring = {
   /** Snappy pop — checkmarks, success icons */
@@ -109,4 +123,5 @@ export const motionTokens = {
   stagger,
   spring,
   variants,
+  skeletonPulse,
 } as const;

@@ -25,17 +25,12 @@ import {
 } from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { motionTokens } from "@/lib/tokens/motion-tokens";
-import { slideIn } from "@/lib/motion/pageMotion";
+import { fadeIn, listStaggerParent, slideIn, skeletonPulse } from "@/lib/motion/pageMotion";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { CreateDriverDialog } from "@/components/CreateDriverDialog";
 import { CreateClientUserDialog } from "@/components/CreateClientUserDialog";
-
-const fadeIn = motionTokens.variants.fadeIn;
-const fadeUp = motionTokens.variants.fadeUp;
-const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
 
 interface UserRow {
   id: string;
@@ -274,13 +269,16 @@ export default function AdminUsers() {
         <motion.div
           initial="hidden"
           animate="visible"
+          exit="exit"
           variants={fadeIn}
           className="grid gap-2.5"
           aria-busy
           aria-label="Loading users"
         >
           {[0, 1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-xl" />
+            <motion.div key={i} animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
+              <Skeleton className="h-20 w-full rounded-xl" />
+            </motion.div>
           ))}
         </motion.div>
       )}

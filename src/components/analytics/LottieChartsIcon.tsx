@@ -1,6 +1,6 @@
 import Lottie from "lottie-react";
-import chartsAnimation from "@/assets/lottie/charts.json";
+import emptySearchAnimation from "@/assets/lottie/admin-empty-search.json";
 
 export function LottieChartsIcon() {
-  return <Lottie animationData={chartsAnimation} loop={true} />;
+  return <Lottie animationData={emptySearchAnimation} loop={true} />;
 }

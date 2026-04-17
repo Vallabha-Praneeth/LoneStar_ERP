@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fadeIn, fadeUp, gridStaggerParent, scaleIn } from "@/lib/motion/pageMotion";
+import { fadeIn, fadeUp, gridStaggerParent, scaleIn, skeletonPulse } from "@/lib/motion/pageMotion";
 import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { generateClientPdf } from "@/lib/generateClientPdf";
 
@@ -123,11 +123,17 @@ export default function ClientCampaignView() {
           aria-busy
           aria-label="Loading campaign"
         >
-          <Skeleton className="h-10 w-full rounded-xl" />
-          <Skeleton className="h-36 w-full rounded-2xl" />
+          <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
+            <Skeleton className="h-10 w-full rounded-xl" />
+          </motion.div>
+          <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
+            <Skeleton className="h-36 w-full rounded-2xl" />
+          </motion.div>
           <div className="grid grid-cols-3 gap-2">
             {[0, 1, 2].map((i) => (
-              <Skeleton key={i} className="aspect-[4/3] rounded-xl" />
+              <motion.div key={i} animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
+                <Skeleton className="aspect-[4/3] rounded-xl" />
+              </motion.div>
             ))}
           </div>
         </motion.div>

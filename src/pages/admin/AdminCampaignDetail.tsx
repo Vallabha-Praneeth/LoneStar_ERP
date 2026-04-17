@@ -27,7 +27,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fadeIn, fadeUp, gridStaggerParent, sectionStaggerParent, cardReveal } from "@/lib/motion/pageMotion";
+import {
+  fadeIn,
+  fadeUp,
+  gridStaggerParent,
+  sectionStaggerParent,
+  cardReveal,
+  skeletonPulse,
+} from "@/lib/motion/pageMotion";
 import { generateCampaignPdf } from "@/lib/generateCampaignPdf";
 import { toast } from "sonner";
 import type { ShiftStatus } from "@/lib/types";
@@ -177,29 +184,29 @@ export default function AdminCampaignDetail() {
         aria-label="Loading campaign"
       >
         <div className="flex items-center gap-3">
-          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+          <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
             <Skeleton className="h-10 w-10 rounded-lg" />
           </motion.div>
           <div className="flex-1 space-y-2">
-            <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+            <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
               <Skeleton className="h-8 w-64 rounded-lg" />
             </motion.div>
-            <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+            <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
               <Skeleton className="h-4 w-48 rounded-lg" />
             </motion.div>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[0, 1, 2, 3].map((i) => (
-            <motion.div key={i} animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+            <motion.div key={i} animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
               <Skeleton className="h-24 rounded-xl" />
             </motion.div>
           ))}
         </div>
-        <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+        <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
           <Skeleton className="h-40 rounded-xl" />
         </motion.div>
-        <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+        <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
           <Skeleton className="h-56 rounded-xl" />
         </motion.div>
       </motion.div>

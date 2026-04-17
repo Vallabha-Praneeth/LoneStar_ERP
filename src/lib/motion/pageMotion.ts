@@ -1,4 +1,6 @@
-import { motionTokens } from "@/lib/tokens/motion-tokens";
+import { motionTokens, skeletonPulse } from "@/lib/tokens/motion-tokens";
+
+export { skeletonPulse };
 
 /** Staggered list rows (campaign cards, routes, users, cost types). */
 export const listStaggerParent = {
