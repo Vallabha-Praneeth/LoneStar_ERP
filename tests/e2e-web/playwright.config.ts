@@ -43,7 +43,10 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
 
-    // Admin portal — uses saved session
+    // Admin portal — uses saved session.
+    // Also depends on setup-client because photo-approval.spec.ts includes a
+    // cross-role test that loads client.json to verify access is denied.
+    // Needed so every shard produces client.json before admin tests run.
     {
       name: 'admin',
       testDir: './tests/admin',
@@ -51,7 +54,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
       },
-      dependencies: ['setup-admin'],
+      dependencies: ['setup-admin', 'setup-client'],
     },
 
     // Client portal — uses saved session
