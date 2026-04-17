@@ -22,6 +22,8 @@ import { fadeIn } from "@/lib/motion/pageMotion";
 import { CreateClientDialog } from "@/components/CreateClientDialog";
 import { CreateDriverDialog } from "@/components/CreateDriverDialog";
 import { CampaignCostEditor, CostRow } from "@/components/CampaignCostEditor";
+import { RiveToggle } from "@/components/ui/rive-toggle";
+import { riveAssets } from "@/assets/rive/rive-assets";
 
 const fadeUp = motionTokens.variants.fadeUp;
 
@@ -109,6 +111,7 @@ export default function AdminCreateCampaign() {
   const [internalNotes, setInternalNotes] = useState("");
   const [clientBilledAmount, setClientBilledAmount] = useState("");
   const [costs, setCosts] = useState<CostRow[]>([]);
+  const [driverCanModifyRoute, setDriverCanModifyRoute] = useState(false);
 
   const clientsQuery = useQuery({
     queryKey: ["clients-active"],
@@ -178,6 +181,7 @@ export default function AdminCreateCampaign() {
           route_id: finalRouteId,
           internal_notes: internalNotes.trim() || null,
           client_billed_amount: parseOptionalNumber(clientBilledAmount),
+          driver_can_modify_route: driverCanModifyRoute,
           created_by: profile!.id,
           status: "draft",
         })
@@ -411,6 +415,25 @@ export default function AdminCreateCampaign() {
                 placeholder="Internal notes about this campaign..."
                 className="rounded-xl bg-secondary/50 border-border resize-none"
                 rows={3}
+              />
+            </div>
+            <div className="flex items-start justify-between gap-4 rounded-xl border border-border bg-secondary/30 p-4">
+              <div className="space-y-1">
+                <Label htmlFor="driver-can-modify-route" className="text-sm font-medium">
+                  Let driver reorder & skip stops
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  When off, the driver follows the route in order and cannot skip stops.
+                </p>
+              </div>
+              <RiveToggle
+                id="driver-can-modify-route"
+                src={riveAssets.unlock}
+                checked={driverCanModifyRoute}
+                onCheckedChange={setDriverCanModifyRoute}
+                aria-label="Let driver reorder and skip stops"
+                width={72}
+                height={42}
               />
             </div>
           </div>
