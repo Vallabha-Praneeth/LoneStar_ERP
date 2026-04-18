@@ -15,6 +15,7 @@ type RiveToggleProps = {
   stateMachineName?: string;
   inputName?: string;
   "aria-label"?: string;
+  "aria-labelledby"?: string;
 };
 
 /**
@@ -36,6 +37,7 @@ export const RiveToggle = React.forwardRef<HTMLDivElement, RiveToggleProps>(
       stateMachineName,
       inputName,
       "aria-label": ariaLabel,
+      "aria-labelledby": ariaLabelledBy,
     },
     ref,
   ) => {
@@ -68,16 +70,26 @@ export const RiveToggle = React.forwardRef<HTMLDivElement, RiveToggleProps>(
     React.useEffect(() => {
       if (!rive || !resolvedSmName) return;
       const inputs = rive.stateMachineInputs(resolvedSmName) ?? [];
-      // Prefer named input; else the first boolean; else null
+      // Prefer a boolean input matching `inputName`; else the first boolean;
+      // else null. Guards against trigger/number inputs that share the name —
+      // writing a bool into a trigger would be a no-op or a runtime error.
       const picked =
-        (inputName && inputs.find((i) => i.name === inputName)) ||
+        (inputName &&
+          inputs.find(
+            (i) => i.name === inputName && typeof i.value === "boolean",
+          )) ||
         inputs.find((i) => typeof i.value === "boolean") ||
         null;
       boolInputRef.current = picked;
-      if (picked) picked.value = checked;
+      if (picked && typeof picked.value === "boolean") picked.value = checked;
     }, [rive, resolvedSmName, inputName, checked]);
 
-    // Fallback: no state machine input available — drive forward/reverse on the first animation
+    // Fallback for animation-only assets (no state machine input): stop first
+    // so the animation resets to frame 0, then play. True reverse playback
+    // needs LinearAnimationInstance.setDirection, which the react-canvas
+    // wrapper does not expose — so this is a best-effort visual cue on
+    // toggle. The primary path (state machine boolean input) above handles
+    // true on/off state for any asset authored with inputs.
     const playedInitialRef = React.useRef(false);
     React.useEffect(() => {
       if (!rive) return;
@@ -89,6 +101,7 @@ export const RiveToggle = React.forwardRef<HTMLDivElement, RiveToggleProps>(
         return;
       }
       try {
+        rive.stop(animName);
         rive.play(animName);
       } catch {
         // no-op — playback is best-effort in fallback mode
@@ -117,6 +130,7 @@ export const RiveToggle = React.forwardRef<HTMLDivElement, RiveToggleProps>(
         aria-checked={checked}
         aria-disabled={disabled || undefined}
         aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         style={{ width, height }}
