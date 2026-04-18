@@ -10,7 +10,13 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { fadeUp, scaleIn, listStaggerParent, sectionStaggerParent } from "@/lib/motion/pageMotion";
+import {
+  fadeUp,
+  scaleIn,
+  listStaggerParent,
+  sectionStaggerParent,
+  skeletonPulse,
+} from "@/lib/motion/pageMotion";
 import { motionTokens } from "@/lib/tokens/motion-tokens";
 
 const quickFadeUp = {
@@ -186,18 +192,18 @@ export default function DriverCampaign() {
         aria-label="Loading campaign"
       >
         <div className="bg-card border-b border-border px-4 py-3">
-          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+          <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
             <Skeleton className="h-6 w-40" />
           </motion.div>
         </div>
         <div className="p-4 space-y-4">
-          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+          <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
             <Skeleton className="h-32 w-full rounded-xl" />
           </motion.div>
-          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+          <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
             <Skeleton className="h-12 w-full rounded-xl" />
           </motion.div>
-          <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}>
+          <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
             <Skeleton className="h-12 w-full rounded-xl" />
           </motion.div>
         </div>
@@ -248,7 +254,6 @@ export default function DriverCampaign() {
       </div>
 
       <motion.div
-        key="content"
         initial="hidden"
         animate="visible"
         variants={sectionStaggerParent}

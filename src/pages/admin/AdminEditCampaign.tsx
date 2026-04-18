@@ -20,6 +20,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motionTokens } from "@/lib/tokens/motion-tokens";
 import { fadeIn as pageFadeIn } from "@/lib/motion/pageMotion";
 import { CampaignCostEditor, CostRow } from "@/components/CampaignCostEditor";
+import { RiveToggle } from "@/components/ui/rive-toggle";
+import { riveAssets } from "@/assets/rive/rive-assets";
 
 const fadeIn = motionTokens.variants.fadeIn;
 const fadeUp = motionTokens.variants.fadeUp;
@@ -62,6 +64,7 @@ interface CampaignData {
   client_id: string;
   driver_profile_id: string | null;
   client_billed_amount: number | null;
+  driver_can_modify_route: boolean;
   campaign_costs: ExistingCost[];
 }
 
@@ -71,6 +74,7 @@ async function fetchCampaign(id: string): Promise<CampaignData> {
     .select(`
       id, title, campaign_date, status, route_id,
       internal_notes, client_id, driver_profile_id, client_billed_amount,
+      driver_can_modify_route,
       campaign_costs ( id, cost_type_id, amount, notes )
     `)
     .eq("id", id)
@@ -135,6 +139,7 @@ export default function AdminEditCampaign() {
   const [internalNotes, setInternalNotes] = useState("");
   const [clientBilledAmount, setClientBilledAmount] = useState("");
   const [costs, setCosts] = useState<CostRow[]>([]);
+  const [driverCanModifyRoute, setDriverCanModifyRoute] = useState(false);
 
   const campaignQuery = useQuery({
     queryKey: ["campaign-edit", id],
@@ -157,6 +162,7 @@ export default function AdminEditCampaign() {
       setRouteId(c.route_id ?? "");
       setInternalNotes(c.internal_notes ?? "");
       setClientBilledAmount(c.client_billed_amount?.toString() ?? "");
+      setDriverCanModifyRoute(!!c.driver_can_modify_route);
 
       // Populate cost rows from existing campaign_costs
       if (c.campaign_costs && c.campaign_costs.length > 0) {
@@ -202,6 +208,7 @@ export default function AdminEditCampaign() {
           route_id: finalRouteId,
           internal_notes: internalNotes.trim() || null,
           client_billed_amount: parseOptionalNumber(clientBilledAmount),
+          driver_can_modify_route: driverCanModifyRoute,
         })
         .eq("id", id!);
       if (updateErr) throw updateErr;
@@ -411,6 +418,25 @@ export default function AdminEditCampaign() {
                 placeholder="Internal notes about this campaign..."
                 className="rounded-xl bg-secondary/50 border-border resize-none"
                 rows={3}
+              />
+            </div>
+            <div className="flex items-start justify-between gap-4 rounded-xl border border-border bg-secondary/30 p-4">
+              <div className="space-y-1">
+                <span id="driver-can-modify-route-edit-label" className="text-sm font-medium text-foreground">
+                  Let driver reorder & skip stops
+                </span>
+                <p className="text-xs text-muted-foreground">
+                  When off, the driver follows the route in order and cannot skip stops.
+                </p>
+              </div>
+              <RiveToggle
+                id="driver-can-modify-route-edit"
+                src={riveAssets.unlock}
+                checked={driverCanModifyRoute}
+                onCheckedChange={setDriverCanModifyRoute}
+                aria-labelledby="driver-can-modify-route-edit-label"
+                width={72}
+                height={42}
               />
             </div>
           </div>

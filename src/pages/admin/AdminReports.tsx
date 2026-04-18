@@ -13,8 +13,14 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fadeIn, fadeUp, gridStaggerParent, listStaggerParent, cardReveal } from "@/lib/motion/pageMotion";
-import { motionTokens } from "@/lib/tokens/motion-tokens";
+import {
+  fadeIn,
+  fadeUp,
+  gridStaggerParent,
+  listStaggerParent,
+  cardReveal,
+  skeletonPulse,
+} from "@/lib/motion/pageMotion";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 
@@ -154,6 +160,7 @@ export default function AdminReports() {
         key="loading"
         initial="hidden"
         animate="visible"
+        exit="exit"
         variants={fadeIn}
         className="space-y-6"
         aria-busy
@@ -161,19 +168,12 @@ export default function AdminReports() {
       >
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[0, 1, 2, 3].map((i) => (
-            <motion.div
-              key={i}
-              animate={{ opacity: [0.4, 1, 0.4] }}
-              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-            >
+            <motion.div key={i} animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
               <Skeleton className="h-28 rounded-xl" />
             </motion.div>
           ))}
         </div>
-        <motion.div
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-        >
+        <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
           <Skeleton className="h-72 w-full rounded-xl" />
         </motion.div>
       </motion.div>

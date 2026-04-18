@@ -32,6 +32,7 @@ export interface Campaign {
   driver_profile_id: string | null;
   internal_notes: string | null;
   client_billed_amount: number | null;
+  driver_can_modify_route?: boolean;
   created_by: string;
   created_at: string;
   updated_at: string;

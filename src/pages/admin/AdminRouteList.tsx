@@ -9,14 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { motionTokens } from "@/lib/tokens/motion-tokens";
-import { slideIn } from "@/lib/motion/pageMotion";
+import { fadeIn, listStaggerParent, slideIn, skeletonPulse } from "@/lib/motion/pageMotion";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-
-const fadeIn = motionTokens.variants.fadeIn;
-const fadeUp = motionTokens.variants.fadeUp;
-const listStaggerParent = { hidden: {}, visible: { transition: { staggerChildren: motionTokens.stagger.list } } } as const;
 
 interface RouteRow {
   id: string;
@@ -112,13 +107,16 @@ export default function AdminRouteList() {
         <motion.div
           initial="hidden"
           animate="visible"
+          exit="exit"
           variants={fadeIn}
           className="grid gap-3"
           aria-busy
           aria-label="Loading routes"
         >
           {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+            <motion.div key={i} animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
+              <Skeleton className="h-24 w-full rounded-xl" />
+            </motion.div>
           ))}
         </motion.div>
       )}

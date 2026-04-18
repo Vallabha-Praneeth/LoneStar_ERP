@@ -10,13 +10,9 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { motionTokens } from "@/lib/tokens/motion-tokens";
-import { fadeIn as pageFadeIn } from "@/lib/motion/pageMotion";
+import { fadeIn, fadeUp, skeletonPulse } from "@/lib/motion/pageMotion";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-
-const fadeIn = motionTokens.variants.fadeIn;
-const fadeUp = motionTokens.variants.fadeUp;
 
 interface StopRow {
   venue_name: string;
@@ -195,9 +191,15 @@ export default function AdminRouteForm() {
         aria-busy
         aria-label="Loading route"
       >
-        <Skeleton className="h-10 w-3/4 rounded-xl" />
-        <Skeleton className="h-48 w-full rounded-xl" />
-        <Skeleton className="h-32 w-full rounded-xl" />
+        <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
+          <Skeleton className="h-10 w-3/4 rounded-xl" />
+        </motion.div>
+        <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
+          <Skeleton className="h-48 w-full rounded-xl" />
+        </motion.div>
+        <motion.div animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
+          <Skeleton className="h-32 w-full rounded-xl" />
+        </motion.div>
       </motion.div>
     );
   }
@@ -208,7 +210,7 @@ export default function AdminRouteForm() {
       initial="hidden"
       animate="visible"
       exit="exit"
-      variants={pageFadeIn}
+      variants={fadeIn}
       className="max-w-2xl space-y-6"
     >
       <div className="flex items-center gap-3">

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Lottie from "lottie-react";
 import { FileDown, Loader2 } from "lucide-react";
-import successAnimation from "@/assets/lottie/success-checkmark.json";
+import successAnimation from "@/assets/lottie/success-check.json";
 import { Button } from "@/components/ui/button";
 import { duration } from "@/lib/tokens";
 import { format } from "date-fns";

@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fadeIn, listStaggerParent, cardReveal } from "@/lib/motion/pageMotion";
+import { fadeIn, listStaggerParent, cardReveal, skeletonPulse } from "@/lib/motion/pageMotion";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 
@@ -152,13 +152,16 @@ export default function AdminCampaignList() {
         <motion.div
           initial="hidden"
           animate="visible"
+          exit="exit"
           variants={fadeIn}
           className="grid gap-3"
           aria-busy
           aria-label="Loading campaigns"
         >
           {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-28 w-full rounded-xl" />
+            <motion.div key={i} animate={skeletonPulse.animate} transition={skeletonPulse.transition}>
+              <Skeleton className="h-28 w-full rounded-xl" />
+            </motion.div>
           ))}
         </motion.div>
       )}

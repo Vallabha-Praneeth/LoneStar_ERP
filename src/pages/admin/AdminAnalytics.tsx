@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
+import Lottie from "lottie-react";
 import { AlertCircle, AlertTriangle } from "lucide-react";
 import { duration } from "@/lib/tokens";
 import { parseFilters } from "@/lib/analytics/filters";
@@ -22,14 +23,50 @@ import { MarginWaterfallChart } from "@/components/analytics/MarginWaterfallChar
 import { CampaignPerformanceTable } from "@/components/analytics/CampaignPerformanceTable";
 import { AnalyticsExportButton } from "@/components/analytics/AnalyticsExportButton";
 import { fadeIn } from "@/lib/motion/pageMotion";
+import analyticsHeroAnim from "@/assets/lottie/analytics-hero.json";
+import singleClientHeroAnim from "@/assets/lottie/single-client-hero.json";
+import singleDriverHeroAnim from "@/assets/lottie/single-driver-hero.json";
+import filterTransitionBurst from "@/assets/lottie/filter-transition-burst.json";
+
+const BURST_MS = 750;
+
+function useBurst() {
+  const [burstAnim, setBurstAnim] = useState<object | null>(null);
+  const [burstVisible, setBurstVisible] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  function trigger(anim: object) {
+    if (timer.current) clearTimeout(timer.current);
+    setBurstAnim(anim);
+    setBurstVisible(true);
+    timer.current = setTimeout(() => setBurstVisible(false), BURST_MS);
+  }
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  return { burstAnim, burstVisible, trigger };
+}
 
 export default function AdminAnalytics() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const filters = useMemo(() => parseFilters(searchParams), [searchParams]);
-
-  // Core data queries — all keyed on the serialized filters
   const filterKey = useMemo(() => JSON.stringify(filters), [filters]);
+
+  const { burstAnim, burstVisible, trigger } = useBurst();
+  const isFirstKey = useRef(true);
+
+  useEffect(() => {
+    if (isFirstKey.current) { isFirstKey.current = false; return; }
+    trigger(filterTransitionBurst);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterKey]);
+
+  const heroSource = filters.clientId
+    ? singleClientHeroAnim
+    : filters.driverId
+      ? singleDriverHeroAnim
+      : analyticsHeroAnim;
 
   const {
     data: summary,
@@ -76,72 +113,99 @@ export default function AdminAnalytics() {
   }
 
   return (
-    <motion.div
-      key="content"
-      className="space-y-6"
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      variants={fadeIn}
-    >
-      <PageHeader filters={filters} />
+    <>
+      <motion.div
+        key="content"
+        className="space-y-6"
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        variants={fadeIn}
+      >
+        <PageHeader filters={filters} />
 
-      <DataCompletenessNotice summary={summary} loading={summaryLoading} />
+        <DataCompletenessNotice summary={summary} loading={summaryLoading} />
 
-      <AnalyticsFilterBar filters={filters} />
+        <AnalyticsFilterBar filters={filters} />
 
-      <AnimatePresence mode="wait">
-        {isEmpty ? (
+        <AnimatePresence mode="wait">
+          {isEmpty ? (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: duration.fast }}
+            >
+              <AnalyticsEmptyState
+                onReset={() => setSearchParams(new URLSearchParams(), { replace: true })}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="data"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: duration.fast }}
+              className="space-y-6"
+            >
+              {/* Hero animation — mirrors mobile analytics hero */}
+              <div className="flex justify-center">
+                <Lottie
+                  animationData={heroSource}
+                  loop
+                  className="w-64 h-36 pointer-events-none"
+                />
+              </div>
+
+              <AnalyticsKpiGrid summary={summary} loading={summaryLoading} />
+
+              {/* Chart row 1 */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <ChartCard title="Revenue / Cost / Profit Trend" loading={timeseriesLoading}>
+                  <RevenueCostProfitChart data={timeseries ?? []} />
+                </ChartCard>
+                <ChartCard title="Top Clients" subtitle="By revenue" loading={clientsLoading}>
+                  <TopClientsChart data={clientBreakdown ?? []} />
+                </ChartCard>
+              </div>
+
+              {/* Chart row 2 */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <ChartCard title="Top Drivers" subtitle="By payout" loading={driversLoading}>
+                  <TopDriversChart data={driverBreakdown ?? []} />
+                </ChartCard>
+                <ChartCard title="Margin Waterfall" loading={summaryLoading}>
+                  {summary && <MarginWaterfallChart summary={summary} />}
+                </ChartCard>
+              </div>
+
+              {/* Campaign performance table */}
+              <ChartCard title="Campaign Performance" loading={campaignsLoading}>
+                <CampaignPerformanceTable data={campaignRows ?? []} />
+              </ChartCard>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Burst overlay — same 750 ms opaque flash as mobile */}
+      <AnimatePresence>
+        {burstVisible && burstAnim && (
           <motion.div
-            key="empty"
+            key="burst"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: duration.fast }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background pointer-events-none"
           >
-            <AnalyticsEmptyState
-              onReset={() => setSearchParams(new URLSearchParams(), { replace: true })}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="data"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: duration.fast }}
-            className="space-y-6"
-          >
-            <AnalyticsKpiGrid summary={summary} loading={summaryLoading} />
-
-            {/* Chart row 1 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <ChartCard title="Revenue / Cost / Profit Trend" loading={timeseriesLoading}>
-                <RevenueCostProfitChart data={timeseries ?? []} />
-              </ChartCard>
-              <ChartCard title="Top Clients" subtitle="By revenue" loading={clientsLoading}>
-                <TopClientsChart data={clientBreakdown ?? []} />
-              </ChartCard>
-            </div>
-
-            {/* Chart row 2 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <ChartCard title="Top Drivers" subtitle="By payout" loading={driversLoading}>
-                <TopDriversChart data={driverBreakdown ?? []} />
-              </ChartCard>
-              <ChartCard title="Margin Waterfall" loading={summaryLoading}>
-                {summary && <MarginWaterfallChart summary={summary} />}
-              </ChartCard>
-            </div>
-
-            {/* Campaign performance table */}
-            <ChartCard title="Campaign Performance" loading={campaignsLoading}>
-              <CampaignPerformanceTable data={campaignRows ?? []} />
-            </ChartCard>
+            <Lottie animationData={burstAnim} loop={false} className="w-72 h-72" />
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </>
   );
 }
 
@@ -187,4 +251,3 @@ function DataCompletenessNotice({
     </div>
   );
 }
-

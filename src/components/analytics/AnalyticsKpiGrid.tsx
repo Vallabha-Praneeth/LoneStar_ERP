@@ -9,7 +9,8 @@ import {
   BarChart3,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { duration, easing, stagger } from "@/lib/tokens";
+import { duration, easing } from "@/lib/tokens";
+import { cardReveal, gridStaggerParent } from "@/lib/motion/pageMotion";
 import type { AnalyticsSummary } from "@/lib/analytics/types";
 import {
   formatCurrency,
@@ -89,26 +90,10 @@ interface AnalyticsKpiGridProps {
   loading: boolean;
 }
 
-const containerVariants = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: stagger.grid },
-  },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: duration.base, ease: easing.smooth },
-  },
-};
-
 export function AnalyticsKpiGrid({ summary, loading }: AnalyticsKpiGridProps) {
   return (
     <motion.div
-      variants={containerVariants}
+      variants={gridStaggerParent}
       initial="hidden"
       animate="visible"
       className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2 sm:gap-3"
@@ -116,7 +101,7 @@ export function AnalyticsKpiGrid({ summary, loading }: AnalyticsKpiGridProps) {
       {kpiCards.map((card) => (
         <motion.div
           key={card.key}
-          variants={cardVariants}
+          variants={cardReveal}
           className="bg-card rounded-xl border border-border shadow-sm p-4"
         >
           <div className="flex items-center justify-between mb-3">
