@@ -419,9 +419,9 @@ export default function AdminCreateCampaign() {
             </div>
             <div className="flex items-start justify-between gap-4 rounded-xl border border-border bg-secondary/30 p-4">
               <div className="space-y-1">
-                <Label htmlFor="driver-can-modify-route" className="text-sm font-medium">
+                <span id="driver-can-modify-route-label" className="text-sm font-medium text-foreground">
                   Let driver reorder & skip stops
-                </Label>
+                </span>
                 <p className="text-xs text-muted-foreground">
                   When off, the driver follows the route in order and cannot skip stops.
                 </p>
@@ -431,7 +431,7 @@ export default function AdminCreateCampaign() {
                 src={riveAssets.unlock}
                 checked={driverCanModifyRoute}
                 onCheckedChange={setDriverCanModifyRoute}
-                aria-label="Let driver reorder and skip stops"
+                aria-labelledby="driver-can-modify-route-label"
                 width={72}
                 height={42}
               />

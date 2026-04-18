@@ -52,6 +52,17 @@ export const RiveToggle = React.forwardRef<HTMLDivElement, RiveToggleProps>(
       return names[0];
     }, [rive, stateMachineName]);
 
+    // If no stateMachineName was provided, useRive did not start one — activate
+    // the first available state machine so its inputs are queryable below.
+    React.useEffect(() => {
+      if (!rive || stateMachineName || !resolvedSmName) return;
+      try {
+        rive.play(resolvedSmName);
+      } catch {
+        // no-op — fallback effect below handles animation-only assets
+      }
+    }, [rive, stateMachineName, resolvedSmName]);
+
     const boolInputRef = React.useRef<StateMachineInput | null>(null);
 
     React.useEffect(() => {

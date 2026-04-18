@@ -33,7 +33,7 @@ const BURST_MS = 750;
 function useBurst() {
   const [burstAnim, setBurstAnim] = useState<object | null>(null);
   const [burstVisible, setBurstVisible] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   function trigger(anim: object) {
     if (timer.current) clearTimeout(timer.current);
