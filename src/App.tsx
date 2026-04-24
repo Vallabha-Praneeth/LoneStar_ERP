@@ -41,6 +41,7 @@ const ClientCampaignView = lazy(() => import("./pages/client/ClientCampaignView"
 const ClientTimingSheet = lazy(() => import("./pages/client/ClientTimingSheet"));
 
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const PrivacyDriver = lazy(() => import("./pages/PrivacyDriver"));
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ function AppRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<RoleSelect />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/privacy/driver" element={<PrivacyDriver />} />
 
         {/* Driver */}
         <Route path="/driver/login" element={<DriverLogin />} />
